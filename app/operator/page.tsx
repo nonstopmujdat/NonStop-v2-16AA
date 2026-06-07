@@ -131,40 +131,49 @@ export default function OperatorPage() {
     // Online modda olayları Supabase'e yazan Next.js API route'una gönderir.
     // Demo sabitleri 003_demo_match_data.sql ile oluşturulan test maçına bağlıdır.
     if (online) {
+      const apiPayload = {
+        client_event_id: event.event_id,
+        event_type: dbType,
+        // V2.1.18: her online olay zorunlu olarak API'ye gider.
+        // API demo-no-db cevabı verirse artık başarı sayılmaz; ekranda görünür hata yazar.
+        match_id: Number(payload.match_id ?? 1),
+        team_id: Number(payload.team_id ?? 1),
+        player_id: playerId ?? null,
+        related_player_id: payload.related_player_id ?? (payload.related_player ? getDemoPlayerId(payload.related_player) : null),
+        quarter: Number(payload.quarter ?? quarter ?? 1),
+        game_clock: payload.game_clock || fmt(seconds) || '10:00',
+        operator_side: 'HOME_OPERATOR',
+        sync_source: 'OPERATOR_WEB',
+        client_created_at: new Date().toISOString(),
+        linked_basket_id: payload.linked_basket_id,
+        event_tags: payload.tags?.join?.('-') || payload.event_tags,
+        notes: JSON.stringify({ player_label: player, ...payload })
+      };
+
       fetch('/api/match-events', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          client_event_id: event.event_id,
-          event_type: dbType,
-          // V2.1.15: kısa kodlar tam event_type adına çevrilir, oyuncu ID garanti gönderilir.
-          // Demo SQL: match_id=1, team_id=1, player_id=1..12.
-          match_id: Number(payload.match_id ?? 1),
-          team_id: Number(payload.team_id ?? 1),
-          player_id: playerId ?? null,
-          related_player_id: payload.related_player_id ?? (payload.related_player ? getDemoPlayerId(payload.related_player) : null),
-          quarter: Number(payload.quarter ?? quarter ?? 1),
-          game_clock: payload.game_clock || fmt(seconds) || '10:00',
-          operator_side: 'HOME_OPERATOR',
-          sync_source: 'OPERATOR_WEB',
-          client_created_at: new Date().toISOString(),
-          linked_basket_id: payload.linked_basket_id,
-          event_tags: payload.tags?.join?.('-') || payload.event_tags,
-          notes: JSON.stringify({ player_label: player, ...payload })
-        })
+        cache: 'no-store',
+        body: JSON.stringify(apiPayload)
       })
         .then(async res => {
-          if (!res.ok) {
-            const text = await res.text();
-            console.error('NONSTOP Supabase kayıt hatası:', text);
-            log(`SİSTEM: Supabase kayıt hatası (${dbType}) ${text.slice(0, 120)}`);
-          } else {
-            markSynced();
+          const rawText = await res.text();
+          let json: any = null;
+          try { json = rawText ? JSON.parse(rawText) : null; } catch { json = null; }
+
+          if (!res.ok || json?.ok === false || json?.mode === 'demo-no-db') {
+            console.error('NONSTOP Supabase kayıt hatası:', rawText, apiPayload);
+            log(`SİSTEM: Supabase kayıt hatası (${dbType}) ${String(json?.error || rawText || res.statusText).slice(0, 140)}`);
+            return;
           }
+
+          markSynced();
+          const insertedId = json?.data?.id ? ` id:${json.data.id}` : '';
+          log(`SİSTEM: Supabase kayıt OK (${dbType})${insertedId}`);
         })
         .catch(err => {
-          console.error('NONSTOP API bağlantı hatası:', err);
-          log(`SİSTEM: API bağlantı hatası (${dbType})`);
+          console.error('NONSTOP API bağlantı hatası:', err, apiPayload);
+          log(`SİSTEM: API bağlantı hatası (${dbType}) ${String(err?.message || err).slice(0, 120)}`);
         });
     }
   }

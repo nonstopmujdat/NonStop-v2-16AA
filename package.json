@@ -1,6 +1,6 @@
 {
-  "name": "nonstop-v2-1-17-build-syntax-fix",
-  "version": "2.1.17",
+  "name": "nonstop-v2-1-18-force-api-post-fix",
+  "version": "2.1.18",
   "private": true,
   "scripts": {
     "dev": "next dev",

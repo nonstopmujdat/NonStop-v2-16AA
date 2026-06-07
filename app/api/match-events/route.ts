@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server';
 import { getUserId, hasSupabaseAdminEnv, jsonError } from '@/lib/apiHelpers';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 
-// NONSTOP V2.1.17
-// Goal: every operator event should reach match_events with required fields filled.
+// NONSTOP V2.1.18
+// Goal: every operator event must POST to Supabase and return a visible success/error result.
 // The database may contain either stable event_type values or older legacy values.
 // We first try the stable value, then fall back to legacy values when Supabase rejects it.
 const STABLE_EVENT_TYPE_MAP: Record<string, string> = {
@@ -182,7 +182,10 @@ export async function POST(req: Request) {
     }
 
     if (!hasSupabaseAdminEnv()) {
-      return NextResponse.json({ ok: true, mode: 'demo-no-db', message: 'match event accepted', data: basePayload });
+      return jsonError('Supabase admin environment missing. Add NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in Render Environment, then redeploy.', 500, {
+        required: ['NEXT_PUBLIC_SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY'],
+        payload: basePayload
+      });
     }
 
     try {
