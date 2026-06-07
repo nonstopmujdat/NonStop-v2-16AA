@@ -33,6 +33,8 @@ type CourtTab = "court" | "shots" | "fouls" | "heat";
 export default function OperatorPage() {
   const [homeScore, setHomeScore] = useState(0);
   const [awayScore, setAwayScore] = useState(0);
+  const [homeTeamFouls, setHomeTeamFouls] = useState(0);
+  const [awayTeamFouls, setAwayTeamFouls] = useState(0);
   const [seconds, setSeconds] = useState(600);
   const [quarter, setQuarter] = useState(1);
   const [matchStatus, setMatchStatus] = useState<
@@ -69,6 +71,16 @@ export default function OperatorPage() {
 
   const periodLabel =
     quarter <= 4 ? `${quarter}. ÇEYREK` : `UZATMA ${quarter - 4}`;
+
+  const foulDots = (count: number) =>
+    Array.from({ length: 5 }, (_, i) => (
+      <span key={i} className={i < Math.min(count, 5) ? "active" : ""} />
+    ));
+
+  function resetPeriodTeamFouls() {
+    setHomeTeamFouls(0);
+    setAwayTeamFouls(0);
+  }
 
   function shouldAutoStopClock(eventType: string) {
     return new Set([
@@ -159,6 +171,7 @@ export default function OperatorPage() {
       const nextQuarter = quarter + 1;
       setQuarter(nextQuarter);
       setSeconds(600);
+      resetPeriodTeamFouls();
       log(
         `SİSTEM: ${quarter}. periyot bitti, ${nextQuarter}. periyot 10:00 hazır. Başlatmak için ▶ bas.`,
       );
@@ -170,6 +183,7 @@ export default function OperatorPage() {
       const nextQuarter = quarter + 1;
       setQuarter(nextQuarter);
       setSeconds(300);
+      resetPeriodTeamFouls();
       log(
         `SİSTEM: skor eşit, UZATMA ${nextQuarter - 4} 05:00 hazır. Başlatmak için ▶ bas.`,
       );
@@ -264,6 +278,12 @@ export default function OperatorPage() {
     };
 
     enqueue(event);
+
+    if (dbType === "FOUL") {
+      const teamId = Number(payload.team_id ?? 1);
+      if (teamId === 2) setAwayTeamFouls((v) => Math.min(5, v + 1));
+      else setHomeTeamFouls((v) => Math.min(5, v + 1));
+    }
 
     if (shouldAutoStopClock(dbType)) {
       stopClock();
@@ -615,6 +635,10 @@ export default function OperatorPage() {
           <div>
             <span>EV SAHİBİ</span>
             <h1>FİNAL SPOR U14</h1>
+            <div className="team-fouls" title="Takım faulleri">
+              <small>FAUL</small>
+              <div className="foul-dots">{foulDots(homeTeamFouls)}</div>
+            </div>
           </div>
           <b>{homeScore}</b>
         </div>
@@ -654,6 +678,10 @@ export default function OperatorPage() {
           <div>
             <span>MİSAFİR</span>
             <h1>TOFAŞ U14</h1>
+            <div className="team-fouls" title="Takım faulleri">
+              <small>FAUL</small>
+              <div className="foul-dots">{foulDots(awayTeamFouls)}</div>
+            </div>
           </div>
           <b>{awayScore}</b>
         </div>
