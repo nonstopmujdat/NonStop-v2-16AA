@@ -1,6 +1,6 @@
 {
-  "name": "nonstop-v2-1-19-player-stats-auto",
-  "version": "2.1.19",
+  "name": "nonstop-v2-1-20-live-score-player-stats",
+  "version": "2.1.20",
   "private": true,
   "scripts": {
     "dev": "next dev",

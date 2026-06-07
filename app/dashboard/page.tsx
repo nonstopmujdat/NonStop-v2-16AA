@@ -5,7 +5,7 @@ export default function DashboardPage() {
     <main className="dashboard">
       <div className="topbar">
         <b>NONSTOP Dashboard</b>
-        <Link href="/operator">Operatör Ekranına Git</Link>
+        <div style={{ display: 'flex', gap: 12 }}><Link href="/operator">Operatör Ekranı</Link><Link href="/live">Canlı Skor</Link></div>
       </div>
 
       <div className="grid four">

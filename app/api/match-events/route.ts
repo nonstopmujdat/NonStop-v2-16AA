@@ -149,6 +149,7 @@ function hasStatDelta(delta: StatDelta) {
 async function incrementPlayerGameStats(insertedEvent: any, normalizedEventType: string) {
   const matchId = asInteger(insertedEvent?.match_id);
   const playerId = asInteger(insertedEvent?.player_id);
+  const teamId = asInteger(insertedEvent?.team_id);
   if (!matchId || !playerId) return { skipped: true, reason: 'missing_match_or_player' };
 
   const delta = statDeltaForEvent(normalizedEventType);
@@ -157,13 +158,14 @@ async function incrementPlayerGameStats(insertedEvent: any, normalizedEventType:
   const supabase = getSupabaseAdmin();
   const { data: existing, error: lookupError } = await supabase
     .from('player_game_stats')
-    .select('id,points,rebounds,assists,steals,blocks,turnovers,fouls')
+    .select('id,team_id,points,rebounds,assists,steals,blocks,turnovers,fouls')
     .eq('match_id', matchId)
     .eq('player_id', playerId)
     .maybeSingle();
   if (lookupError) throw lookupError;
 
-  const nextValues = {
+  const nextValues: Record<string, any> = {
+    team_id: Number(existing?.team_id || 0) || teamId || null,
     points: Number(existing?.points || 0) + Number(delta.points || 0),
     rebounds: Number(existing?.rebounds || 0) + Number(delta.rebounds || 0),
     assists: Number(existing?.assists || 0) + Number(delta.assists || 0),
@@ -186,7 +188,7 @@ async function incrementPlayerGameStats(insertedEvent: any, normalizedEventType:
 
   const { data, error } = await supabase
     .from('player_game_stats')
-    .insert({ match_id: matchId, player_id: playerId, ...nextValues })
+    .insert({ match_id: matchId, player_id: playerId, team_id: teamId || null, ...nextValues })
     .select()
     .single();
   if (error) throw error;
@@ -204,13 +206,14 @@ async function incrementTeamGameStats(insertedEvent: any, normalizedEventType: s
   const supabase = getSupabaseAdmin();
   const { data: existing, error: lookupError } = await supabase
     .from('team_game_stats')
-    .select('id,points,rebounds,assists,steals,blocks,turnovers,fouls')
+    .select('id,team_id,points,rebounds,assists,steals,blocks,turnovers,fouls')
     .eq('match_id', matchId)
     .eq('team_id', teamId)
     .maybeSingle();
   if (lookupError) throw lookupError;
 
-  const nextValues = {
+  const nextValues: Record<string, any> = {
+    team_id: Number(existing?.team_id || 0) || teamId || null,
     points: Number(existing?.points || 0) + Number(delta.points || 0),
     rebounds: Number(existing?.rebounds || 0) + Number(delta.rebounds || 0),
     assists: Number(existing?.assists || 0) + Number(delta.assists || 0),
