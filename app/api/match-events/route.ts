@@ -100,6 +100,161 @@ async function insertMatchEvent(payload: Record<string, any>) {
   return data;
 }
 
+
+
+type StatDelta = {
+  points?: number;
+  rebounds?: number;
+  assists?: number;
+  steals?: number;
+  blocks?: number;
+  turnovers?: number;
+  fouls?: number;
+};
+
+function statDeltaForEvent(eventType: string): StatDelta {
+  switch (eventType) {
+    case '2PA_MADE':
+    case '2PM':
+      return { points: 2 };
+    case '3PA_MADE':
+    case '3PM':
+      return { points: 3 };
+    case 'FTA_MADE':
+    case 'FTM':
+      return { points: 1 };
+    case 'OREB':
+    case 'DREB':
+      return { rebounds: 1 };
+    case 'AST':
+      return { assists: 1 };
+    case 'STL':
+      return { steals: 1 };
+    case 'BLK':
+      return { blocks: 1 };
+    case 'TOV':
+      return { turnovers: 1 };
+    case 'FOUL':
+    case 'PF':
+      return { fouls: 1 };
+    default:
+      return {};
+  }
+}
+
+function hasStatDelta(delta: StatDelta) {
+  return Object.values(delta).some(v => Number(v || 0) !== 0);
+}
+
+async function incrementPlayerGameStats(insertedEvent: any, normalizedEventType: string) {
+  const matchId = asInteger(insertedEvent?.match_id);
+  const playerId = asInteger(insertedEvent?.player_id);
+  if (!matchId || !playerId) return { skipped: true, reason: 'missing_match_or_player' };
+
+  const delta = statDeltaForEvent(normalizedEventType);
+  if (!hasStatDelta(delta)) return { skipped: true, reason: 'no_player_stat_delta' };
+
+  const supabase = getSupabaseAdmin();
+  const { data: existing, error: lookupError } = await supabase
+    .from('player_game_stats')
+    .select('id,points,rebounds,assists,steals,blocks,turnovers,fouls')
+    .eq('match_id', matchId)
+    .eq('player_id', playerId)
+    .maybeSingle();
+  if (lookupError) throw lookupError;
+
+  const nextValues = {
+    points: Number(existing?.points || 0) + Number(delta.points || 0),
+    rebounds: Number(existing?.rebounds || 0) + Number(delta.rebounds || 0),
+    assists: Number(existing?.assists || 0) + Number(delta.assists || 0),
+    steals: Number(existing?.steals || 0) + Number(delta.steals || 0),
+    blocks: Number(existing?.blocks || 0) + Number(delta.blocks || 0),
+    turnovers: Number(existing?.turnovers || 0) + Number(delta.turnovers || 0),
+    fouls: Number(existing?.fouls || 0) + Number(delta.fouls || 0)
+  };
+
+  if (existing?.id) {
+    const { data, error } = await supabase
+      .from('player_game_stats')
+      .update(nextValues)
+      .eq('id', existing.id)
+      .select()
+      .single();
+    if (error) throw error;
+    return { skipped: false, action: 'updated', data };
+  }
+
+  const { data, error } = await supabase
+    .from('player_game_stats')
+    .insert({ match_id: matchId, player_id: playerId, ...nextValues })
+    .select()
+    .single();
+  if (error) throw error;
+  return { skipped: false, action: 'inserted', data };
+}
+
+async function incrementTeamGameStats(insertedEvent: any, normalizedEventType: string) {
+  const matchId = asInteger(insertedEvent?.match_id);
+  const teamId = asInteger(insertedEvent?.team_id);
+  if (!matchId || !teamId) return { skipped: true, reason: 'missing_match_or_team' };
+
+  const delta = statDeltaForEvent(normalizedEventType);
+  if (!hasStatDelta(delta)) return { skipped: true, reason: 'no_team_stat_delta' };
+
+  const supabase = getSupabaseAdmin();
+  const { data: existing, error: lookupError } = await supabase
+    .from('team_game_stats')
+    .select('id,points,rebounds,assists,steals,blocks,turnovers,fouls')
+    .eq('match_id', matchId)
+    .eq('team_id', teamId)
+    .maybeSingle();
+  if (lookupError) throw lookupError;
+
+  const nextValues = {
+    points: Number(existing?.points || 0) + Number(delta.points || 0),
+    rebounds: Number(existing?.rebounds || 0) + Number(delta.rebounds || 0),
+    assists: Number(existing?.assists || 0) + Number(delta.assists || 0),
+    steals: Number(existing?.steals || 0) + Number(delta.steals || 0),
+    blocks: Number(existing?.blocks || 0) + Number(delta.blocks || 0),
+    turnovers: Number(existing?.turnovers || 0) + Number(delta.turnovers || 0),
+    fouls: Number(existing?.fouls || 0) + Number(delta.fouls || 0)
+  };
+
+  if (existing?.id) {
+    const { data, error } = await supabase
+      .from('team_game_stats')
+      .update(nextValues)
+      .eq('id', existing.id)
+      .select()
+      .single();
+    if (error) throw error;
+    return { skipped: false, action: 'updated', data };
+  }
+
+  const { data, error } = await supabase
+    .from('team_game_stats')
+    .insert({ match_id: matchId, team_id: teamId, ...nextValues })
+    .select()
+    .single();
+  if (error) throw error;
+  return { skipped: false, action: 'inserted', data };
+}
+
+async function updateStatsAfterEvent(insertedEvent: any, normalizedEventType: string) {
+  const result: Record<string, any> = { player_stats: null, team_stats: null };
+  try {
+    result.player_stats = await incrementPlayerGameStats(insertedEvent, normalizedEventType);
+  } catch (err: any) {
+    result.player_stats = { ok: false, error: errorText(err) };
+  }
+  try {
+    result.team_stats = await incrementTeamGameStats(insertedEvent, normalizedEventType);
+  } catch (err: any) {
+    result.team_stats = { ok: false, error: errorText(err) };
+  }
+  return result;
+}
+
 async function tryInsertWithSafePlayer(payload: Record<string, any>, notesObject: Record<string, any>) {
   try {
     const data = await insertMatchEvent(payload);
@@ -190,7 +345,8 @@ export async function POST(req: Request) {
 
     try {
       const result = await tryInsertWithSafePlayer(basePayload, notesObject);
-      return NextResponse.json({ ok: true, data: result.data, event_type_used: eventType, safe_player_fallback: result.safePlayerFallback });
+      const stats = await updateStatsAfterEvent(result.data, eventType);
+      return NextResponse.json({ ok: true, data: result.data, event_type_used: eventType, safe_player_fallback: result.safePlayerFallback, stats });
     } catch (firstError: any) {
       const legacyType = LEGACY_EVENT_TYPE_MAP[eventType];
       if (!legacyType) {
@@ -206,7 +362,8 @@ export async function POST(req: Request) {
 
       try {
         const result = await tryInsertWithSafePlayer(legacyPayload, notesObject);
-        return NextResponse.json({ ok: true, data: result.data, event_type_used: legacyType, stable_event_type: eventType, fallback: true, safe_player_fallback: result.safePlayerFallback });
+        const stats = await updateStatsAfterEvent(result.data, eventType);
+        return NextResponse.json({ ok: true, data: result.data, event_type_used: legacyType, stable_event_type: eventType, fallback: true, safe_player_fallback: result.safePlayerFallback, stats });
       } catch (secondError: any) {
         return jsonError('match event insert failed after legacy fallback', 500, {
           stable_error: errorText(firstError),
