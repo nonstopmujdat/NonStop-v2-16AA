@@ -289,8 +289,147 @@ async function incrementTeamGameStats(insertedEvent: any, normalizedEventType: s
   return { skipped: false, action: 'inserted', data };
 }
 
+
+async function incrementPlayerPeriodStats(insertedEvent: any, normalizedEventType: string) {
+  const matchId = asInteger(insertedEvent?.match_id);
+  const quarter = Math.max(1, asInteger(insertedEvent?.quarter, 1) || 1);
+  const playerId = asInteger(insertedEvent?.player_id);
+  const teamId = asInteger(insertedEvent?.team_id);
+  if (!matchId || !playerId) return { skipped: true, reason: 'missing_match_or_player' };
+
+  const delta = statDeltaForEvent(normalizedEventType);
+  if (!hasStatDelta(delta)) return { skipped: true, reason: 'no_player_period_delta' };
+
+  const supabase = getSupabaseAdmin();
+  const { data: existing, error: lookupError } = await supabase
+    .from('player_period_stats')
+    .select('id,team_id,points,oreb,dreb,rebounds,assists,steals,blocks,turnovers,fouls,fgm,fga,tpm,tpa,ftm,fta')
+    .eq('match_id', matchId)
+    .eq('quarter', quarter)
+    .eq('player_id', playerId)
+    .maybeSingle();
+  if (lookupError) throw lookupError;
+
+  const fgm = addNumber(existing?.fgm, delta.fgm);
+  const fga = addNumber(existing?.fga, delta.fga);
+  const tpm = addNumber(existing?.tpm, delta.tpm);
+  const tpa = addNumber(existing?.tpa, delta.tpa);
+  const ftm = addNumber(existing?.ftm, delta.ftm);
+  const fta = addNumber(existing?.fta, delta.fta);
+
+  const nextValues: Record<string, any> = {
+    team_id: Number(existing?.team_id || 0) || teamId || null,
+    points: addNumber(existing?.points, delta.points),
+    oreb: addNumber(existing?.oreb, delta.oreb),
+    dreb: addNumber(existing?.dreb, delta.dreb),
+    rebounds: addNumber(existing?.rebounds, delta.rebounds),
+    assists: addNumber(existing?.assists, delta.assists),
+    steals: addNumber(existing?.steals, delta.steals),
+    blocks: addNumber(existing?.blocks, delta.blocks),
+    turnovers: addNumber(existing?.turnovers, delta.turnovers),
+    fouls: addNumber(existing?.fouls, delta.fouls),
+    fgm,
+    fga,
+    fg_pct: percent(fgm, fga),
+    tpm,
+    tpa,
+    tp_pct: percent(tpm, tpa),
+    ftm,
+    fta,
+    ft_pct: percent(ftm, fta),
+    updated_at: new Date().toISOString()
+  };
+
+  if (existing?.id) {
+    const { data, error } = await supabase
+      .from('player_period_stats')
+      .update(nextValues)
+      .eq('id', existing.id)
+      .select()
+      .single();
+    if (error) throw error;
+    return { skipped: false, action: 'updated', data };
+  }
+
+  const { data, error } = await supabase
+    .from('player_period_stats')
+    .insert({ match_id: matchId, quarter, player_id: playerId, team_id: teamId || null, ...nextValues })
+    .select()
+    .single();
+  if (error) throw error;
+  return { skipped: false, action: 'inserted', data };
+}
+
+async function incrementTeamPeriodStats(insertedEvent: any, normalizedEventType: string) {
+  const matchId = asInteger(insertedEvent?.match_id);
+  const quarter = Math.max(1, asInteger(insertedEvent?.quarter, 1) || 1);
+  const teamId = asInteger(insertedEvent?.team_id);
+  if (!matchId || !teamId) return { skipped: true, reason: 'missing_match_or_team' };
+
+  const delta = statDeltaForEvent(normalizedEventType);
+  if (!hasStatDelta(delta)) return { skipped: true, reason: 'no_team_period_delta' };
+
+  const supabase = getSupabaseAdmin();
+  const { data: existing, error: lookupError } = await supabase
+    .from('team_period_stats')
+    .select('id,points,oreb,dreb,rebounds,assists,steals,blocks,turnovers,fouls,fgm,fga,tpm,tpa,ftm,fta')
+    .eq('match_id', matchId)
+    .eq('quarter', quarter)
+    .eq('team_id', teamId)
+    .maybeSingle();
+  if (lookupError) throw lookupError;
+
+  const fgm = addNumber(existing?.fgm, delta.fgm);
+  const fga = addNumber(existing?.fga, delta.fga);
+  const tpm = addNumber(existing?.tpm, delta.tpm);
+  const tpa = addNumber(existing?.tpa, delta.tpa);
+  const ftm = addNumber(existing?.ftm, delta.ftm);
+  const fta = addNumber(existing?.fta, delta.fta);
+
+  const nextValues: Record<string, any> = {
+    points: addNumber(existing?.points, delta.points),
+    oreb: addNumber(existing?.oreb, delta.oreb),
+    dreb: addNumber(existing?.dreb, delta.dreb),
+    rebounds: addNumber(existing?.rebounds, delta.rebounds),
+    assists: addNumber(existing?.assists, delta.assists),
+    steals: addNumber(existing?.steals, delta.steals),
+    blocks: addNumber(existing?.blocks, delta.blocks),
+    turnovers: addNumber(existing?.turnovers, delta.turnovers),
+    fouls: addNumber(existing?.fouls, delta.fouls),
+    fgm,
+    fga,
+    fg_pct: percent(fgm, fga),
+    tpm,
+    tpa,
+    tp_pct: percent(tpm, tpa),
+    ftm,
+    fta,
+    ft_pct: percent(ftm, fta),
+    updated_at: new Date().toISOString()
+  };
+
+  if (existing?.id) {
+    const { data, error } = await supabase
+      .from('team_period_stats')
+      .update(nextValues)
+      .eq('id', existing.id)
+      .select()
+      .single();
+    if (error) throw error;
+    return { skipped: false, action: 'updated', data };
+  }
+
+  const { data, error } = await supabase
+    .from('team_period_stats')
+    .insert({ match_id: matchId, quarter, team_id: teamId, ...nextValues })
+    .select()
+    .single();
+  if (error) throw error;
+  return { skipped: false, action: 'inserted', data };
+}
+
 async function updateStatsAfterEvent(insertedEvent: any, normalizedEventType: string) {
-  const result: Record<string, any> = { player_stats: null, team_stats: null };
+  const result: Record<string, any> = { player_stats: null, team_stats: null, player_period_stats: null, team_period_stats: null };
   try {
     result.player_stats = await incrementPlayerGameStats(insertedEvent, normalizedEventType);
   } catch (err: any) {
@@ -300,6 +439,16 @@ async function updateStatsAfterEvent(insertedEvent: any, normalizedEventType: st
     result.team_stats = await incrementTeamGameStats(insertedEvent, normalizedEventType);
   } catch (err: any) {
     result.team_stats = { ok: false, error: errorText(err) };
+  }
+  try {
+    result.player_period_stats = await incrementPlayerPeriodStats(insertedEvent, normalizedEventType);
+  } catch (err: any) {
+    result.player_period_stats = { ok: false, error: errorText(err) };
+  }
+  try {
+    result.team_period_stats = await incrementTeamPeriodStats(insertedEvent, normalizedEventType);
+  } catch (err: any) {
+    result.team_period_stats = { ok: false, error: errorText(err) };
   }
   return result;
 }

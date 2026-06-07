@@ -1,6 +1,6 @@
 {
-  "name": "nonstop-v2-1-21a-clock-period-overtime",
-  "version": "2.1.21-a",
+  "name": "nonstop-v2-1-21b-period-stats",
+  "version": "2.1.21-b-period-stats",
   "private": true,
   "scripts": {
     "dev": "next dev",
