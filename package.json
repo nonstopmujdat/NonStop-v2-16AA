@@ -1,6 +1,6 @@
 {
-  "name": "nonstop-v2-1-16-render-yarn-stable",
-  "version": "2.1.16",
+  "name": "nonstop-v2-1-17-build-syntax-fix",
+  "version": "2.1.17",
   "private": true,
   "scripts": {
     "dev": "next dev",

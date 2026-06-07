@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getUserId, hasSupabaseAdminEnv, jsonError } from '@/lib/apiHelpers';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 
-// NONSTOP V2.1.15
+// NONSTOP V2.1.17
 // Goal: every operator event should reach match_events with required fields filled.
 // The database may contain either stable event_type values or older legacy values.
 // We first try the stable value, then fall back to legacy values when Supabase rejects it.
@@ -100,6 +100,34 @@ async function insertMatchEvent(payload: Record<string, any>) {
   return data;
 }
 
+async function tryInsertWithSafePlayer(payload: Record<string, any>, notesObject: Record<string, any>) {
+  try {
+    const data = await insertMatchEvent(payload);
+    return { data, safePlayerFallback: false };
+  } catch (err: any) {
+    const text = errorText(err);
+    // V2.1.17: function moved outside the request block so TypeScript/ES5 build accepts it.
+    // Demo oyuncu ID'leri veritabanında yoksa kayıt tamamen düşmesin.
+    // player_id nullable olduğu için oyuncuyu notes içinde koruyup kaydı null player_id ile tekrar deneriz.
+    if (String(err?.code) === '23503' && /player_id|related_player_id|players/i.test(text)) {
+      const safePayload = {
+        ...payload,
+        player_id: null,
+        related_player_id: null,
+        notes: JSON.stringify({
+          ...notesObject,
+          player_fk_error: text,
+          original_player_id: payload.player_id,
+          original_related_player_id: payload.related_player_id
+        })
+      };
+      const data = await insertMatchEvent(safePayload);
+      return { data, safePlayerFallback: true };
+    }
+    throw err;
+  }
+}
+
 export async function POST(req: Request) {
   let body: any = null;
   try {
@@ -157,30 +185,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: true, mode: 'demo-no-db', message: 'match event accepted', data: basePayload });
     }
 
-    async function tryInsertWithSafePlayer(payload: Record<string, any>) {
-      try {
-        const data = await insertMatchEvent(payload);
-        return { data, safePlayerFallback: false };
-      } catch (err: any) {
-        const text = errorText(err);
-        // V2.1.15: demo oyuncu ID'leri veritabanında yoksa kayıt tamamen düşmesin.
-        // player_id nullable olduğu için oyuncuyu notes içinde koruyup kaydı null player_id ile tekrar deneriz.
-        if (String(err?.code) === '23503' && /player_id|related_player_id|players/i.test(text)) {
-          const safePayload = {
-            ...payload,
-            player_id: null,
-            related_player_id: null,
-            notes: JSON.stringify({ ...notesObject, player_fk_error: text, original_player_id: payload.player_id, original_related_player_id: payload.related_player_id })
-          };
-          const data = await insertMatchEvent(safePayload);
-          return { data, safePlayerFallback: true };
-        }
-        throw err;
-      }
-    }
-
     try {
-      const result = await tryInsertWithSafePlayer(basePayload);
+      const result = await tryInsertWithSafePlayer(basePayload, notesObject);
       return NextResponse.json({ ok: true, data: result.data, event_type_used: eventType, safe_player_fallback: result.safePlayerFallback });
     } catch (firstError: any) {
       const legacyType = LEGACY_EVENT_TYPE_MAP[eventType];
@@ -196,7 +202,7 @@ export async function POST(req: Request) {
       };
 
       try {
-        const result = await tryInsertWithSafePlayer(legacyPayload);
+        const result = await tryInsertWithSafePlayer(legacyPayload, notesObject);
         return NextResponse.json({ ok: true, data: result.data, event_type_used: legacyType, stable_event_type: eventType, fallback: true, safe_player_fallback: result.safePlayerFallback });
       } catch (secondError: any) {
         return jsonError('match event insert failed after legacy fallback', 500, {
