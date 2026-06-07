@@ -1,0 +1,36 @@
+-- NONSTOP V2.1.13 Match Events Enum + Debug Fix
+-- Run once in Supabase SQL Editor.
+-- This makes the event_type enum accept both stable and legacy operator event names.
+
+ALTER TYPE event_type ADD VALUE IF NOT EXISTS '2PM';
+ALTER TYPE event_type ADD VALUE IF NOT EXISTS '2PA_MADE';
+ALTER TYPE event_type ADD VALUE IF NOT EXISTS '2PA_MISS';
+ALTER TYPE event_type ADD VALUE IF NOT EXISTS '3PM';
+ALTER TYPE event_type ADD VALUE IF NOT EXISTS '3PA_MADE';
+ALTER TYPE event_type ADD VALUE IF NOT EXISTS '3PA_MISS';
+ALTER TYPE event_type ADD VALUE IF NOT EXISTS 'FTM';
+ALTER TYPE event_type ADD VALUE IF NOT EXISTS 'FTA_MADE';
+ALTER TYPE event_type ADD VALUE IF NOT EXISTS 'FTA_MISS';
+ALTER TYPE event_type ADD VALUE IF NOT EXISTS 'AST';
+ALTER TYPE event_type ADD VALUE IF NOT EXISTS 'OREB';
+ALTER TYPE event_type ADD VALUE IF NOT EXISTS 'DREB';
+ALTER TYPE event_type ADD VALUE IF NOT EXISTS 'STL';
+ALTER TYPE event_type ADD VALUE IF NOT EXISTS 'BLK';
+ALTER TYPE event_type ADD VALUE IF NOT EXISTS 'BLK_AGAINST';
+ALTER TYPE event_type ADD VALUE IF NOT EXISTS 'TOV';
+ALTER TYPE event_type ADD VALUE IF NOT EXISTS 'PF';
+ALTER TYPE event_type ADD VALUE IF NOT EXISTS 'FOUL';
+ALTER TYPE event_type ADD VALUE IF NOT EXISTS 'FD';
+ALTER TYPE event_type ADD VALUE IF NOT EXISTS 'FOUL_DRAWN';
+ALTER TYPE event_type ADD VALUE IF NOT EXISTS 'BY';
+ALTER TYPE event_type ADD VALUE IF NOT EXISTS 'BLOCKED';
+ALTER TYPE event_type ADD VALUE IF NOT EXISTS 'TIMEOUT';
+ALTER TYPE event_type ADD VALUE IF NOT EXISTS 'SUBSTITUTION';
+ALTER TYPE event_type ADD VALUE IF NOT EXISTS 'CHARGE_DRAWN';
+
+-- Quick verification: event_type list
+SELECT enumlabel AS event_type_value
+FROM pg_enum e
+JOIN pg_type t ON t.oid = e.enumtypid
+WHERE t.typname = 'event_type'
+ORDER BY enumlabel;
