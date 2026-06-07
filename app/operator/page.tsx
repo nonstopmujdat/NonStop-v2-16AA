@@ -25,16 +25,14 @@ type CourtMarker = {
 type CourtTab = 'court' | 'shots' | 'fouls' | 'heat';
 
 export default function OperatorPage() {
-  const [homeScore, setHomeScore] = useState(52);
-  const [awayScore] = useState(47);
-  const [seconds, setSeconds] = useState(204);
-  const [quarter] = useState(4);
+  const [homeScore, setHomeScore] = useState(0);
+  const [awayScore] = useState(0);
+  const [seconds, setSeconds] = useState(600);
+  const [quarter, setQuarter] = useState(1);
   const [timer, setTimer] = useState<any>(null);
   const [selectedPlayer, setSelectedPlayer] = useState('#7 Burak');
   const [feed, setFeed] = useState<string[]>([
-    '03:40 #7 Burak 2PM AB',
-    '03:58 #4 Ahmet AST',
-    '04:10 #8 Kerem DREB'
+    'SİSTEM: V2.1.20 hazır - maç 1. periyot 10:00 ile başlar'
   ]);
   const [shotModal, setShotModal] = useState<ShotContext | null>(null);
   const [pendingShot, setPendingShot] = useState<ShotContext | null>(null);
@@ -70,6 +68,20 @@ export default function OperatorPage() {
   function stopClock() {
     clearInterval(timer);
     setTimer(null);
+  }
+
+  function nextQuarter() {
+    stopClock();
+    setQuarter(q => Math.min(4, q + 1));
+    setSeconds(600);
+    log('SİSTEM: Yeni periyot 10:00 ile başlatıldı');
+  }
+
+  function resetMatchClock() {
+    stopClock();
+    setQuarter(1);
+    setSeconds(600);
+    log('SİSTEM: Maç saati 1. periyot 10:00 olarak sıfırlandı');
   }
 
   function getDemoPlayerId(player: string) {
@@ -361,7 +373,7 @@ export default function OperatorPage() {
         <div className="clock-box">
           <span>{quarter}. ÇEYREK</span>
           <strong>{fmt(seconds)}</strong>
-          <div className="clock-buttons"><button onClick={startClock}>▶</button><button onClick={stopClock}>⏸</button></div>
+          <div className="clock-buttons"><button onClick={startClock}>▶</button><button onClick={stopClock}>⏸</button><button onClick={nextQuarter}>Periyot +</button><button onClick={resetMatchClock}>Sıfırla</button></div>
           <small>{online ? 'ONLINE' : 'OFFLINE'} / Queue: {typeof window !== 'undefined' ? getQueue().filter(e => e.status !== 'synced').length : 0}</small>
           <button onClick={toggleOnline}>{online ? 'Offline Yap' : 'Online Yap'}</button>
         </div>

@@ -14,6 +14,7 @@ type MatchRow = {
   away_score: number | null;
 };
 type EventRow = { event_type: string; team_id: number | null };
+type TeamStatRow = { team_id: number | null; points: number | null; rebounds: number | null; assists: number | null; steals: number | null; blocks: number | null; turnovers: number | null; fouls: number | null };
 type Player = { id: number; jersey_no: number | null; first_name: string; last_name: string };
 type PlayerStat = {
   id: number;
@@ -81,17 +82,32 @@ export default async function LivePage() {
   const homeTeam = teamMap.get(homeTeamId)?.name || 'FİNAL SPOR U14';
   const awayTeam = teamMap.get(awayTeamId)?.name || 'TOFAŞ U14';
 
-  const { data: events = [] } = await supabase
-    .from('match_events')
-    .select('event_type,team_id')
+  const { data: teamStats = [] } = await supabase
+    .from('team_game_stats')
+    .select('team_id,points,rebounds,assists,steals,blocks,turnovers,fouls')
     .eq('match_id', matchId);
 
-  const score = (events as EventRow[]).reduce((acc, e) => {
-    const pts = pointsForEvent(e.event_type);
-    if (Number(e.team_id) === homeTeamId) acc.home += pts;
-    if (Number(e.team_id) === awayTeamId) acc.away += pts;
+  const scoreFromTeamStats = (teamStats as TeamStatRow[]).reduce((acc, row) => {
+    if (Number(row.team_id) === homeTeamId) acc.home += Number(row.points || 0);
+    if (Number(row.team_id) === awayTeamId) acc.away += Number(row.points || 0);
     return acc;
   }, { home: 0, away: 0 });
+
+  // Güvenlik: team_game_stats henüz boşsa canlı skor match_events üzerinden hesaplanır.
+  let score = scoreFromTeamStats;
+  if (!score.home && !score.away) {
+    const { data: events = [] } = await supabase
+      .from('match_events')
+      .select('event_type,team_id')
+      .eq('match_id', matchId);
+
+    score = (events as EventRow[]).reduce((acc, e) => {
+      const pts = pointsForEvent(e.event_type);
+      if (Number(e.team_id) === homeTeamId) acc.home += pts;
+      if (Number(e.team_id) === awayTeamId) acc.away += pts;
+      return acc;
+    }, { home: 0, away: 0 });
+  }
 
   const { data: stats = [] } = await supabase
     .from('player_game_stats')
