@@ -42,6 +42,9 @@ export default function OperatorPage() {
   >("live");
   const [timer, setTimer] = useState<any>(null);
   const [selectedPlayer, setSelectedPlayer] = useState("#7 Burak");
+  const [playerFouls, setPlayerFouls] = useState<Record<string, number>>({});
+  const [fouledOutPlayers, setFouledOutPlayers] = useState<string[]>([]);
+  const [mustSubPlayer, setMustSubPlayer] = useState<string | null>(null);
   const [feed, setFeed] = useState<string[]>([]);
   const [shotModal, setShotModal] = useState<ShotContext | null>(null);
   const [pendingShot, setPendingShot] = useState<ShotContext | null>(null);
@@ -80,6 +83,19 @@ export default function OperatorPage() {
   function resetPeriodTeamFouls() {
     setHomeTeamFouls(0);
     setAwayTeamFouls(0);
+  }
+
+  function isFouledOut(player: string) {
+    return fouledOutPlayers.includes(player);
+  }
+
+  function requireFoulOutSubstitution(player: string) {
+    stopClock();
+    setSubOut(player);
+    setMustSubPlayer(player);
+    setFouledOutPlayers((prev) => Array.from(new Set([...prev, player])));
+    log(`SİSTEM: ${player} 5 faul yaptı ve oyun dışı kaldı. Değişiklik yapılmadan oyun devam etmez.`);
+    persistMatchState("live");
   }
 
   function shouldAutoStopClock(eventType: string) {
@@ -141,6 +157,10 @@ export default function OperatorPage() {
   }
 
   function startClock() {
+    if (mustSubPlayer) {
+      log(`SİSTEM: ${mustSubPlayer} 5 faul nedeniyle oyundan çıkmalı. Önce değişiklik yap.`);
+      return;
+    }
     if (timer || matchStatus === "finished") return;
     const t = setInterval(() => {
       setSeconds((s) => Math.max(0, s - 1));
@@ -283,6 +303,17 @@ export default function OperatorPage() {
       const teamId = Number(payload.team_id ?? 1);
       if (teamId === 2) setAwayTeamFouls((v) => Math.min(5, v + 1));
       else setHomeTeamFouls((v) => Math.min(5, v + 1));
+
+      setPlayerFouls((prev) => {
+        const nextCount = Number(prev[player] || 0) + 1;
+        const next = { ...prev, [player]: nextCount };
+        if (nextCount >= 5) {
+          setTimeout(() => requireFoulOutSubstitution(player), 0);
+        } else {
+          log(`SİSTEM: ${player} faul sayısı ${nextCount}/5.`);
+        }
+        return next;
+      });
     }
 
     if (shouldAutoStopClock(dbType)) {
@@ -369,11 +400,27 @@ export default function OperatorPage() {
   }
 
   function eventOnly(type: string) {
+    if (matchStatus === "finished") {
+      log("SİSTEM: maç kilitli, yeni istatistik girilemez.");
+      return;
+    }
+    if (isFouledOut(selectedPlayer)) {
+      log(`SİSTEM: ${selectedPlayer} 5 faul nedeniyle tekrar istatistik alamaz.`);
+      return;
+    }
     addQueue(type, selectedPlayer);
     log(`${fmt(seconds)} ${selectedPlayer} ${type}`);
   }
 
   function startShot(points: 1 | 2 | 3, made: boolean) {
+    if (matchStatus === "finished") {
+      log("SİSTEM: maç kilitli, şut girilemez.");
+      return;
+    }
+    if (isFouledOut(selectedPlayer)) {
+      log(`SİSTEM: ${selectedPlayer} 5 faul nedeniyle oyuna dönemez / istatistik alamaz.`);
+      return;
+    }
     const ctx: ShotContext = {
       linked_basket_id: createLinkedBasketId(),
       player: selectedPlayer,
@@ -593,6 +640,10 @@ export default function OperatorPage() {
 
     const playerOut = subOut;
     if (playerIn === playerOut) return;
+    if (isFouledOut(playerIn)) {
+      log(`SİSTEM: ${playerIn} 5 faul nedeniyle oyuna giremez.`);
+      return;
+    }
 
     // Oyuncu değişikliği sadece olay kaydı değil, ekrandaki kadroyu da günceller.
     // Çıkan oyuncu sahadan yedeklere, giren oyuncu yedekten sahaya taşınır.
@@ -609,6 +660,7 @@ export default function OperatorPage() {
     });
 
     setSelectedPlayer(playerIn);
+    if (mustSubPlayer === playerOut) setMustSubPlayer(null);
     stopClock();
     log("SİSTEM: oyuncu değişikliği için süre durdu. Devam için ▶ bas.");
     addQueue("SUBSTITUTION", playerOut, {
@@ -807,12 +859,18 @@ export default function OperatorPage() {
             {onCourt.map((p) => (
               <div
                 key={p}
-                className={`player-row ${selectedPlayer === p ? "selected" : ""}`}
-                onClick={() => setSelectedPlayer(p)}
+                className={`player-row ${selectedPlayer === p ? "selected" : ""} ${isFouledOut(p) ? "fouled-out" : ""}`}
+                onClick={() => {
+                  if (isFouledOut(p)) {
+                    log(`SİSTEM: ${p} 5 faul nedeniyle seçilemez.`);
+                    return;
+                  }
+                  setSelectedPlayer(p);
+                }}
               >
                 <div>
                   <b>{p}</b>
-                  <small>Oyunda</small>
+                  <small>{isFouledOut(p) ? "5 Faul - Oyun Dışı" : `Oyunda / PF ${playerFouls[p] || 0}`}</small>
                 </div>
                 <button
                   onClick={(e) => {
@@ -829,8 +887,19 @@ export default function OperatorPage() {
             <h3>Yedekler</h3>
             <div className="bench-grid">
               {bench.map((p) => (
-                <button key={p} onClick={() => setSelectedPlayer(p)}>
-                  {p}
+                <button
+                  key={p}
+                  className={isFouledOut(p) ? "fouled-out-btn" : ""}
+                  disabled={isFouledOut(p)}
+                  onClick={() => {
+                    if (isFouledOut(p)) {
+                      log(`SİSTEM: ${p} 5 faul nedeniyle seçilemez.`);
+                      return;
+                    }
+                    setSelectedPlayer(p);
+                  }}
+                >
+                  {p} {isFouledOut(p) ? "🚫" : ""}
                 </button>
               ))}
             </div>
@@ -838,7 +907,7 @@ export default function OperatorPage() {
           <div className="selected-player-card">
             <span>Seçili Oyuncu</span>
             <strong>{selectedPlayer}</strong>
-            <small>Bu oyuncuya istatistik işlenecek</small>
+            <small>PF: {playerFouls[selectedPlayer] || 0}/5 {isFouledOut(selectedPlayer) ? "• OYUN DIŞI" : ""}</small>
           </div>
         </aside>
       </main>
@@ -908,16 +977,18 @@ export default function OperatorPage() {
             <h2>Oyuncu Değişikliği</h2>
             <p>
               Çıkan oyuncu: <b>{subOut}</b>
+              {mustSubPlayer === subOut ? <><br /><b style={{ color: "#facc15" }}>5 faul nedeniyle zorunlu değişiklik</b></> : null}
             </p>
             <h3>Oyuna Girecek Oyuncu</h3>
             <div className="bench-grid">
               {bench.map((p) => (
                 <button
                   key={p}
-                  className="sub-in-btn"
+                  className={`sub-in-btn ${isFouledOut(p) ? "fouled-out-btn" : ""}`}
+                  disabled={isFouledOut(p)}
                   onClick={() => saveSub(p)}
                 >
-                  → {p} Oyuna Gir
+                  → {p} {isFouledOut(p) ? "Giremez" : "Oyuna Gir"}
                 </button>
               ))}
             </div>

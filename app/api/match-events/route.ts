@@ -185,7 +185,7 @@ async function incrementPlayerGameStats(insertedEvent: any, normalizedEventType:
   const supabase = getSupabaseAdmin();
   const { data: existing, error: lookupError } = await supabase
     .from('player_game_stats')
-    .select('id,team_id,points,rebounds,assists,steals,blocks,turnovers,fouls')
+    .select('id,team_id,points,rebounds,assists,steals,blocks,turnovers,fouls,fouled_out')
     .eq('match_id', matchId)
     .eq('player_id', playerId)
     .maybeSingle();
@@ -199,7 +199,8 @@ async function incrementPlayerGameStats(insertedEvent: any, normalizedEventType:
     steals: addNumber(existing?.steals, delta.steals),
     blocks: addNumber(existing?.blocks, delta.blocks),
     turnovers: addNumber(existing?.turnovers, delta.turnovers),
-    fouls: addNumber(existing?.fouls, delta.fouls)
+    fouls: addNumber(existing?.fouls, delta.fouls),
+    fouled_out: addNumber(existing?.fouls, delta.fouls) >= 5
   };
 
   if (existing?.id) {
@@ -498,6 +499,18 @@ export async function POST(req: Request) {
     const playerId = asInteger(body.player_id);
     const relatedPlayerId = asInteger(body.related_player_id);
     const gameClock = body.game_clock || body.clock || '10:00';
+
+    if (hasSupabaseAdminEnv()) {
+      const { data: matchRow, error: matchLookupError } = await getSupabaseAdmin()
+        .from('matches')
+        .select('*')
+        .eq('id', matchId)
+        .maybeSingle();
+      if (matchLookupError) return jsonError('match lock check failed', 500, matchLookupError);
+      if (matchRow?.locked || String(matchRow?.status || '').toUpperCase() === 'LOCKED') {
+        return jsonError('match is locked; event insert blocked', 423, { match_id: matchId, status: matchRow?.status, locked: matchRow?.locked });
+      }
+    }
 
     const notesObject = {
       raw_event_type: rawEventType,
