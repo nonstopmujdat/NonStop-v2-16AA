@@ -45,7 +45,8 @@ export async function POST(req: Request) {
       update.locked_at = new Date().toISOString();
     }
 
-    const { data, error } = await getSupabaseAdmin()
+    const supabase = getSupabaseAdmin();
+    const { data, error } = await supabase
       .from('matches')
       .update(update)
       .eq('id', matchId)
@@ -53,7 +54,14 @@ export async function POST(req: Request) {
       .single();
 
     if (error) return jsonError('match state update failed', 500, { error, update });
-    return NextResponse.json({ ok: true, data });
+
+    let season_update: any = null;
+    if (status === 'finished') {
+      const { error: seasonError } = await supabase.rpc('recalculate_season_after_match', { p_match_id: matchId });
+      season_update = seasonError ? { ok: false, error: seasonError.message } : { ok: true };
+    }
+
+    return NextResponse.json({ ok: true, data, season_update });
   } catch (err: any) {
     return jsonError('match state request failed', 500, { error: err?.message || String(err) });
   }

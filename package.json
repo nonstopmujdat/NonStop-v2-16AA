@@ -1,6 +1,6 @@
 {
-  "name": "nonstop-v2-1-21b-period-stats",
-  "version": "2.1.21-b-period-stats",
+  "name": "nonstop-v2-1-22a-season-standings",
+  "version": "2.1.22-a-season-standings",
   "private": true,
   "scripts": {
     "dev": "next dev",
