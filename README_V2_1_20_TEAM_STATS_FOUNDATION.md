@@ -1,38 +1,34 @@
-# NONSTOP V2.1.20 Team Stats Foundation
+# NONSTOP V2.1.20 – Team Stats Foundation
 
-Bu paket V2.1.18 ve V2.1.19 üzerine hazırlanmıştır.
+Bu paket V2.1.18 ve V2.1.19 çalışan yapıyı bozmadan takım istatistik altyapısını güçlendirir.
 
-## Düzeltilenler
+## Kapsam
 
-- Operatör ekranı artık demo skorla başlamaz: 0-0.
-- Maç artık 4. periyottan başlamaz: 1. periyot, 10:00.
-- `player_game_stats.team_id` desteği güçlendirildi.
-- `team_game_stats` canlı güncellenir.
-- `/live` sayfası skoru önce `team_game_stats` üzerinden okur.
-- Supabase için `database/009_team_stats_foundation_live_score.sql` eklendi.
+- Maç başlangıcı: 1. periyot
+- Saat başlangıcı: 10:00
+- Demo skor başlangıcı: 0-0
+- player_game_stats içine team_id desteği
+- team_game_stats tablosu
+- live_match_score view
+- Operatör olayı kaydolunca player_game_stats ve team_game_stats güncelleme
 
-## Kurulum
+## Supabase kurulumu
 
-1. ZIP içeriğini GitHub reposuna yükle.
-2. Render otomatik deploy etsin.
-3. Supabase SQL Editor içinde şu dosyayı çalıştır:
+Supabase SQL Editor içinde şu dosyanın içeriğini çalıştır:
 
-`database/009_team_stats_foundation_live_score.sql`
+`database/009_team_stats_foundation_v2_1_20.sql`
 
-4. Render sitesinde kontrol et:
+Dosya adını değil, dosyanın içindeki SQL kodunu yapıştırmalısın.
 
-- `/operator`
-- `/live`
-
-## Test
-
-Operatörde bir oyuncuya +2 sayı gir.
-Sonra Supabase SQL Editor içinde kontrol et:
+## Kontrol SQL'leri
 
 ```sql
-select * from public.player_game_stats where match_id = 1;
-select * from public.team_game_stats where match_id = 1;
-select * from public.live_match_score where match_id = 1;
+select * from public.team_game_stats;
+select * from public.live_match_score;
 ```
 
-Beklenen sonuç: oyuncu istatistiği ve takım skoru birlikte artar.
+## V2.1.21'e bırakılanlar
+
+- Oyuncu istatistik ekranı geliştirme
+- Takım istatistik ekranı geliştirme
+- Maç sonu raporu

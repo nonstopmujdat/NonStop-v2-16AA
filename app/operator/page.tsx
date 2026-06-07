@@ -28,12 +28,10 @@ export default function OperatorPage() {
   const [homeScore, setHomeScore] = useState(0);
   const [awayScore] = useState(0);
   const [seconds, setSeconds] = useState(600);
-  const [quarter, setQuarter] = useState(1);
+  const [quarter] = useState(1);
   const [timer, setTimer] = useState<any>(null);
   const [selectedPlayer, setSelectedPlayer] = useState('#7 Burak');
-  const [feed, setFeed] = useState<string[]>([
-    'SİSTEM: V2.1.20 hazır - maç 1. periyot 10:00 ile başlar'
-  ]);
+  const [feed, setFeed] = useState<string[]>([]);
   const [shotModal, setShotModal] = useState<ShotContext | null>(null);
   const [pendingShot, setPendingShot] = useState<ShotContext | null>(null);
   const [pendingFoul, setPendingFoul] = useState<string | null>(null);
@@ -44,12 +42,7 @@ export default function OperatorPage() {
   const [courtTab, setCourtTab] = useState<CourtTab>('court');
   const clickTimer = useRef<any>(null);
   const clickPoints = useRef<1 | 2 | 3 | null>(null);
-  const [markers, setMarkers] = useState<CourtMarker[]>([
-    { id: 'm1', x: 24, y: 30, label: '2P✓', made: true, kind: 'shot' },
-    { id: 'm2', x: 36, y: 39, label: '3P×', made: false, kind: 'shot' },
-    { id: 'm3', x: 51, y: 52, label: 'PF', made: false, kind: 'foul' },
-    { id: 'm4', x: 70, y: 44, label: '2P✓', made: true, kind: 'shot' }
-  ]);
+  const [markers, setMarkers] = useState<CourtMarker[]>([]);
 
   function fmt(s: number) {
     return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
@@ -68,20 +61,6 @@ export default function OperatorPage() {
   function stopClock() {
     clearInterval(timer);
     setTimer(null);
-  }
-
-  function nextQuarter() {
-    stopClock();
-    setQuarter(q => Math.min(4, q + 1));
-    setSeconds(600);
-    log('SİSTEM: Yeni periyot 10:00 ile başlatıldı');
-  }
-
-  function resetMatchClock() {
-    stopClock();
-    setQuarter(1);
-    setSeconds(600);
-    log('SİSTEM: Maç saati 1. periyot 10:00 olarak sıfırlandı');
   }
 
   function getDemoPlayerId(player: string) {
@@ -373,7 +352,7 @@ export default function OperatorPage() {
         <div className="clock-box">
           <span>{quarter}. ÇEYREK</span>
           <strong>{fmt(seconds)}</strong>
-          <div className="clock-buttons"><button onClick={startClock}>▶</button><button onClick={stopClock}>⏸</button><button onClick={nextQuarter}>Periyot +</button><button onClick={resetMatchClock}>Sıfırla</button></div>
+          <div className="clock-buttons"><button onClick={startClock}>▶</button><button onClick={stopClock}>⏸</button></div>
           <small>{online ? 'ONLINE' : 'OFFLINE'} / Queue: {typeof window !== 'undefined' ? getQueue().filter(e => e.status !== 'synced').length : 0}</small>
           <button onClick={toggleOnline}>{online ? 'Offline Yap' : 'Online Yap'}</button>
         </div>

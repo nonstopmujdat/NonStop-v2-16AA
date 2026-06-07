@@ -102,30 +102,49 @@ async function insertMatchEvent(payload: Record<string, any>) {
 
 
 
+
 type StatDelta = {
   points?: number;
+  oreb?: number;
+  dreb?: number;
   rebounds?: number;
   assists?: number;
   steals?: number;
   blocks?: number;
   turnovers?: number;
   fouls?: number;
+  fgm?: number;
+  fga?: number;
+  tpm?: number;
+  tpa?: number;
+  ftm?: number;
+  fta?: number;
 };
 
 function statDeltaForEvent(eventType: string): StatDelta {
   switch (eventType) {
     case '2PA_MADE':
     case '2PM':
-      return { points: 2 };
+      return { points: 2, fgm: 1, fga: 1 };
+    case '2PA_MISS':
+    case '2PA':
+      return { fga: 1 };
     case '3PA_MADE':
     case '3PM':
-      return { points: 3 };
+      return { points: 3, fgm: 1, fga: 1, tpm: 1, tpa: 1 };
+    case '3PA_MISS':
+    case '3PA':
+      return { fga: 1, tpa: 1 };
     case 'FTA_MADE':
     case 'FTM':
-      return { points: 1 };
+      return { points: 1, ftm: 1, fta: 1 };
+    case 'FTA_MISS':
+    case 'FTA':
+      return { fta: 1 };
     case 'OREB':
+      return { oreb: 1, rebounds: 1 };
     case 'DREB':
-      return { rebounds: 1 };
+      return { dreb: 1, rebounds: 1 };
     case 'AST':
       return { assists: 1 };
     case 'STL':
@@ -144,6 +163,14 @@ function statDeltaForEvent(eventType: string): StatDelta {
 
 function hasStatDelta(delta: StatDelta) {
   return Object.values(delta).some(v => Number(v || 0) !== 0);
+}
+
+function addNumber(current: unknown, delta: unknown) {
+  return Number(current || 0) + Number(delta || 0);
+}
+
+function percent(made: number, attempt: number) {
+  return attempt > 0 ? Number(((made / attempt) * 100).toFixed(2)) : 0;
 }
 
 async function incrementPlayerGameStats(insertedEvent: any, normalizedEventType: string) {
@@ -166,13 +193,13 @@ async function incrementPlayerGameStats(insertedEvent: any, normalizedEventType:
 
   const nextValues: Record<string, any> = {
     team_id: Number(existing?.team_id || 0) || teamId || null,
-    points: Number(existing?.points || 0) + Number(delta.points || 0),
-    rebounds: Number(existing?.rebounds || 0) + Number(delta.rebounds || 0),
-    assists: Number(existing?.assists || 0) + Number(delta.assists || 0),
-    steals: Number(existing?.steals || 0) + Number(delta.steals || 0),
-    blocks: Number(existing?.blocks || 0) + Number(delta.blocks || 0),
-    turnovers: Number(existing?.turnovers || 0) + Number(delta.turnovers || 0),
-    fouls: Number(existing?.fouls || 0) + Number(delta.fouls || 0)
+    points: addNumber(existing?.points, delta.points),
+    rebounds: addNumber(existing?.rebounds, delta.rebounds),
+    assists: addNumber(existing?.assists, delta.assists),
+    steals: addNumber(existing?.steals, delta.steals),
+    blocks: addNumber(existing?.blocks, delta.blocks),
+    turnovers: addNumber(existing?.turnovers, delta.turnovers),
+    fouls: addNumber(existing?.fouls, delta.fouls)
   };
 
   if (existing?.id) {
@@ -206,21 +233,40 @@ async function incrementTeamGameStats(insertedEvent: any, normalizedEventType: s
   const supabase = getSupabaseAdmin();
   const { data: existing, error: lookupError } = await supabase
     .from('team_game_stats')
-    .select('id,team_id,points,rebounds,assists,steals,blocks,turnovers,fouls')
+    .select('id,team_id,points,oreb,dreb,rebounds,assists,steals,blocks,turnovers,fouls,fgm,fga,tpm,tpa,ftm,fta')
     .eq('match_id', matchId)
     .eq('team_id', teamId)
     .maybeSingle();
   if (lookupError) throw lookupError;
 
+  const fgm = addNumber(existing?.fgm, delta.fgm);
+  const fga = addNumber(existing?.fga, delta.fga);
+  const tpm = addNumber(existing?.tpm, delta.tpm);
+  const tpa = addNumber(existing?.tpa, delta.tpa);
+  const ftm = addNumber(existing?.ftm, delta.ftm);
+  const fta = addNumber(existing?.fta, delta.fta);
+
   const nextValues: Record<string, any> = {
-    team_id: Number(existing?.team_id || 0) || teamId || null,
-    points: Number(existing?.points || 0) + Number(delta.points || 0),
-    rebounds: Number(existing?.rebounds || 0) + Number(delta.rebounds || 0),
-    assists: Number(existing?.assists || 0) + Number(delta.assists || 0),
-    steals: Number(existing?.steals || 0) + Number(delta.steals || 0),
-    blocks: Number(existing?.blocks || 0) + Number(delta.blocks || 0),
-    turnovers: Number(existing?.turnovers || 0) + Number(delta.turnovers || 0),
-    fouls: Number(existing?.fouls || 0) + Number(delta.fouls || 0)
+    team_id: Number(existing?.team_id || 0) || teamId,
+    points: addNumber(existing?.points, delta.points),
+    oreb: addNumber(existing?.oreb, delta.oreb),
+    dreb: addNumber(existing?.dreb, delta.dreb),
+    rebounds: addNumber(existing?.rebounds, delta.rebounds),
+    assists: addNumber(existing?.assists, delta.assists),
+    steals: addNumber(existing?.steals, delta.steals),
+    blocks: addNumber(existing?.blocks, delta.blocks),
+    turnovers: addNumber(existing?.turnovers, delta.turnovers),
+    fouls: addNumber(existing?.fouls, delta.fouls),
+    fgm,
+    fga,
+    fg_pct: percent(fgm, fga),
+    tpm,
+    tpa,
+    tp_pct: percent(tpm, tpa),
+    ftm,
+    fta,
+    ft_pct: percent(ftm, fta),
+    updated_at: new Date().toISOString()
   };
 
   if (existing?.id) {
