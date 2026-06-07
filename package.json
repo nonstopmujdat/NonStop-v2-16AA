@@ -1,6 +1,6 @@
 {
-  "name": "nonstop-v2-1-20-live-score-player-stats",
-  "version": "2.1.20",
+  "name": "nonstop-v2-1-21a-clock-period-overtime",
+  "version": "2.1.21-a",
   "private": true,
   "scripts": {
     "dev": "next dev",
