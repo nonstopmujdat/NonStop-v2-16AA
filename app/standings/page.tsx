@@ -9,6 +9,8 @@ type StandingRow = {
   season_name: string | null;
   category_name: string | null;
   gender: string | null;
+  competition_name: string | null;
+  competition_type: string | null;
   league_name: string | null;
   league_level: string | null;
   team_name: string | null;
@@ -29,7 +31,7 @@ function groupKey(row: StandingRow) {
     row.season_name || 'Sezon yok',
     row.category_name || 'Kategori yok',
     row.gender || '',
-    row.league_name || `Lig ${row.league_level || ''}`,
+    row.competition_name || row.league_name || `Lig ${row.league_level || ''}`,
   ].join(' / ');
 }
 
@@ -74,7 +76,7 @@ export default async function StandingsPage() {
         <h1>İl Bazlı Bağımsız Lig Puan Durumu</h1>
         <p style={{ marginTop: 6 }}>
           Sıralama: Puan → eşit takımlar arası maç/puan → eşit takımlar arası averaj → genel averaj → atılan sayı.
-          A ve B ligleri birbirinden bağımsızdır.
+          Lig, turnuva ve özel maç organizasyonları competition yapısında tutulur. A/B ligleri bağımsızdır.
         </p>
         {error ? <p style={{ color: '#b91c1c' }}>Supabase hata: {error.message}</p> : null}
         {!error && rows.length === 0 ? <p>Henüz puan durumu verisi yok. Önce sezon, lig ve takım bağlantıları kurulmalı.</p> : null}

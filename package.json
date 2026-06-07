@@ -1,6 +1,6 @@
 {
-  "name": "nonstop-v2-1-22a-season-standings",
-  "version": "2.1.22-a-season-standings",
+  "name": "nonstop-v2-1-22aa-competitions-clubs",
+  "version": "2.1.22-aa-competitions-clubs",
   "private": true,
   "scripts": {
     "dev": "next dev",
