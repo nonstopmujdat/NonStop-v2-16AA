@@ -3,10 +3,10 @@ import { getSupabaseAdmin, hasSupabaseAdminConfig } from '@/lib/supabaseAdmin';
 
 export const dynamic = 'force-dynamic';
 
-type Row = { id: number; name: string };
+type Row = { id: number; name: string; gender?: string | null };
 
-function OptionList({ rows }: { rows: Row[] }) {
-  return <>{rows.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}</>;
+function OptionList({ rows, showGender = false }: { rows: Row[]; showGender?: boolean }) {
+  return <>{rows.map((r) => <option key={r.id} value={r.id}>{r.name}{showGender && r.gender ? ` / ${r.gender}` : ''}</option>)}</>;
 }
 
 export default async function MiniAdminTeamsPage({ searchParams }: { searchParams?: { ok?: string; error?: string } }) {
@@ -21,7 +21,7 @@ export default async function MiniAdminTeamsPage({ searchParams }: { searchParam
     const [clubRes, cityRes, catRes, seasonRes, teamRes] = await Promise.all([
       supabase.from('clubs').select('id,name').order('name'),
       supabase.from('cities').select('id,name').order('name'),
-      supabase.from('categories').select('id,name').order('name'),
+      supabase.from('categories').select('id,name,gender').order('name'),
       supabase.from('seasons').select('id,name').order('name'),
       supabase.from('teams').select('id,name,club_id,category_id,season_id,created_at').order('id', { ascending: false }).limit(20),
     ]);
@@ -44,7 +44,8 @@ export default async function MiniAdminTeamsPage({ searchParams }: { searchParam
           <label>Takım Adı<input name="name" required placeholder="Örn: FİNAL SPOR U14" /></label>
           <label>Kulüp<select name="club_id" required><option value="">Seç</option><OptionList rows={clubs} /></select></label>
           <label>İl<select name="city_id" required><option value="">Seç</option><OptionList rows={cities} /></select></label>
-          <label>Kategori<select name="category_id" required><option value="">Seç</option><OptionList rows={categories} /></select></label>
+          <label>Kategori / Cinsiyet<select name="category_id" required><option value="">Seç</option><OptionList rows={categories} showGender /></select></label>
+          <label>A/B Grubu<select name="league_level_info" defaultValue="NONE"><option value="NONE">Yok / Seçilmedi</option><option value="A">A Grubu</option><option value="B">B Grubu</option></select><small>Not: A/B grubu organizasyona takım eklerken resmi olarak kullanılır.</small></label>
           <label>Sezon<select name="season_id" required><option value="">Seç</option><OptionList rows={seasons} /></select></label>
           <button type="submit">Kaydet</button>
         </form>

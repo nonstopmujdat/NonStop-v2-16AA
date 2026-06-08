@@ -12,7 +12,7 @@ export default async function MiniAdminReportsPage() {
   }
   return (
     <main className="dashboard">
-      <div className="topbar"><b>Mini Admin / PDF Raporlar</b><div><Link href="/mini-admin">Mini Admin</Link></div></div>
+      <div className="topbar"><b>Full Admin / PDF Raporlar</b><div><Link href="/full-admin">Mini Admin</Link></div></div>
       <section className="card">
         <h1>📄 Maç PDF Raporları</h1>
         <p>Maç istatistik raporu, saha üzeri şut/atış haritası ve faul haritası ayrı ayrı yazdırılabilir. Tarayıcıdan <b>Yazdır → PDF olarak kaydet</b> seç.</p>
@@ -25,7 +25,7 @@ export default async function MiniAdminReportsPage() {
             <tbody>{matches.map((m) => <tr key={m.match_id}>
               <td>{m.match_id}</td><td>{m.match_date || '-'}</td><td>{m.match_time || '-'}</td><td>{m.venue_name || '-'}</td>
               <td>{m.home_team_name || '-'} - {m.away_team_name || '-'}</td>
-              <td style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}><Link href={`/mini-admin/reports/${m.match_id}/stats`}>İstatistik PDF</Link><Link href={`/mini-admin/reports/${m.match_id}/shots`}>Şut Haritası PDF</Link><Link href={`/mini-admin/reports/${m.match_id}/fouls`}>Faul Haritası PDF</Link></td>
+              <td style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}><Link href={`/full-admin/reports/${m.match_id}/stats`}>İstatistik PDF</Link><Link href={`/full-admin/reports/${m.match_id}/shots`}>Şut Haritası PDF</Link><Link href={`/full-admin/reports/${m.match_id}/fouls`}>Faul Haritası PDF</Link></td>
             </tr>)}</tbody>
           </table>
         </div>

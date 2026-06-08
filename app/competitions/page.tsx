@@ -4,7 +4,7 @@ import { getSupabaseAdmin, hasSupabaseAdminConfig } from '@/lib/supabaseAdmin';
 
 export const dynamic = 'force-dynamic';
 
-type OptionRow = { id: number; name?: string | null };
+type OptionRow = { id: number; name?: string | null; gender?: string | null };
 type CompetitionRow = {
   id: number;
   city_name: string | null;
@@ -190,6 +190,10 @@ function optionLabel(row: OptionRow, fallback: string) {
   return row.name || `${fallback} #${row.id}`;
 }
 
+function categoryLabel(row: OptionRow) {
+  return `${row.name || `Kategori #${row.id}`}${row.gender ? ` / ${row.gender}` : ''}`;
+}
+
 export default async function CompetitionsPage() {
   if (!hasSupabaseAdminConfig()) {
     return (
@@ -205,7 +209,7 @@ export default async function CompetitionsPage() {
     supabase.from('live_competitions').select('*').order('city_name', { ascending: true }).order('category_name', { ascending: true }).order('competition_name', { ascending: true }),
     supabase.from('cities').select('id,name').order('name', { ascending: true }),
     supabase.from('seasons').select('id,name').order('name', { ascending: false }),
-    supabase.from('categories').select('id,name').order('name', { ascending: true }),
+    supabase.from('categories').select('id,name,gender').order('name', { ascending: true }),
     supabase.from('teams').select('id,name').order('name', { ascending: true }),
     supabase.from('clubs').select('id,name').order('name', { ascending: true }),
     supabase.from('venues').select('id,name').order('name', { ascending: true }),
@@ -270,7 +274,7 @@ export default async function CompetitionsPage() {
           <label>Kategori
             <select name="category_id" style={inputStyle}>
               <option value="">Seçmeden geç</option>
-              {categories.map((row) => <option key={row.id} value={row.id}>{optionLabel(row, 'Kategori')}</option>)}
+              {categories.map((row) => <option key={row.id} value={row.id}>{categoryLabel(row)}</option>)}
             </select>
           </label>
           <label>Tip
@@ -282,7 +286,7 @@ export default async function CompetitionsPage() {
               <option value="SPECIAL_MATCH">Özel Maç</option>
             </select>
           </label>
-          <label>A/B
+          <label>A/B Grubu
             <select name="league_level" style={inputStyle} defaultValue="NONE">
               <option value="NONE">Yok</option>
               <option value="A">A Ligi</option>

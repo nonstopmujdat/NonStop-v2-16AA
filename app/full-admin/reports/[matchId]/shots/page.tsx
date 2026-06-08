@@ -80,7 +80,7 @@ export default async function ShotMapPdfPage({ params }: { params: { matchId: st
 
   return (
     <main className="dashboard printable-report">
-      <div className="topbar no-print"><b>Şut / Atış Haritası PDF</b><div style={{ display: 'flex', gap: 12 }}><button id="printShotButton">Yazdır</button><Link href="/mini-admin/reports">Geri</Link></div></div>
+      <div className="topbar no-print"><b>Şut / Atış Haritası PDF</b><div style={{ display: 'flex', gap: 12 }}><button id="printShotButton">Yazdır</button><Link href="/full-admin/reports">Geri</Link></div></div>
       <section className="card">
         <h1>NONSTOP Şut / Atış Haritası</h1>
         <p><b>Maç ID:</b> {matchId}</p>
