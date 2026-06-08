@@ -83,6 +83,7 @@ export default function OperatorPage() {
   const [specialHomeName, setSpecialHomeName] = useState("FİNAL SPOR U14");
   const [specialAwayName, setSpecialAwayName] = useState("KARMA TAKIM U16");
   const [specialMatchName, setSpecialMatchName] = useState("Hazırlık Maçı");
+  const [operatorMatchType, setOperatorMatchType] = useState<"FRIENDLY" | "SPECIAL_MATCH" | "TOURNAMENT">("FRIENDLY");
   const [specialCountsForSeason, setSpecialCountsForSeason] = useState(false);
   const [activeMatch, setActiveMatch] = useState<DemoMatch | null>(null);
   const [operatorSide, setOperatorSide] = useState<OperatorSide>("HOME");
@@ -135,6 +136,7 @@ export default function OperatorPage() {
   const opponentTeamName = activeMatch ? (operatorSide === "HOME" ? activeMatch.away : activeMatch.home) : "DİĞER TAKIM";
   const canStartClock = operatorSide === "HOME";
   const isSpecialOrFriendly = activeMatch?.competitionType === "SPECIAL_MATCH" || activeMatch?.competitionType === "FRIENDLY";
+  const isTournamentMatch = activeMatch?.competitionType === "TOURNAMENT";
   const matchRosterLimit = isSpecialOrFriendly ? SPECIAL_MATCH_ROSTER_LIMIT : OFFICIAL_MATCH_ROSTER_LIMIT;
 
   const periodLabel =
@@ -785,14 +787,15 @@ export default function OperatorPage() {
       home,
       away,
       category: "SERBEST",
-      competition: specialMatchName.trim() || "Özel / Hazırlık Maçı",
-      competitionType: "SPECIAL_MATCH",
-      countsForStandings: false,
+      competition: specialMatchName.trim() || (operatorMatchType === "TOURNAMENT" ? "Turnuva Maçı" : "Özel / Hazırlık Maçı"),
+      competitionType: operatorMatchType,
+      countsForStandings: operatorMatchType === "TOURNAMENT",
       countsForSeasonStats: false,
     };
     setActiveMatch(specialMatch);
     setOperatorSide("HOME");
-    setRosterChecked(HOME_PLAYERS.slice(0, 8));
+    const initialLimit = operatorMatchType === "FRIENDLY" || operatorMatchType === "SPECIAL_MATCH" ? SPECIAL_MATCH_ROSTER_LIMIT : OFFICIAL_MATCH_ROSTER_LIMIT;
+    setRosterChecked(HOME_PLAYERS.slice(0, Math.min(8, initialLimit)));
     setStarterChecked(HOME_PLAYERS.slice(0, 5));
     setForfeitWarning("");
     setFlowStep("ROSTER");
@@ -861,12 +864,13 @@ export default function OperatorPage() {
                 <h3>Supervisor Özel / Hazırlık Maçı</h3>
                 <p>U14 - U16, karma takım veya resmi fikstüre girmeyen maçlar için. Bu maç lig puan durumuna işlemez; kendi içinde istatistik ve şut haritası tutar.</p>
                 <div className="special-grid">
+                  <label>Maç türü<select value={operatorMatchType} onChange={(e) => setOperatorMatchType(e.target.value as any)}><option value="FRIENDLY">Hazırlık Maçı</option><option value="SPECIAL_MATCH">Özel Maç</option><option value="TOURNAMENT">Turnuva Maçı</option></select></label>
                   <label>Maç adı<input value={specialMatchName} onChange={(e) => setSpecialMatchName(e.target.value)} /></label>
                   <label>1. Takım<input value={specialHomeName} onChange={(e) => setSpecialHomeName(e.target.value)} /></label>
                   <label>2. Takım / Karma<input value={specialAwayName} onChange={(e) => setSpecialAwayName(e.target.value)} /></label>
-                  <span className="checkbox-line">Sezon istatistiğine işlemez; ayrı özel/hazırlık istatistiği tutulur.</span>
+                  <span className="checkbox-line">Hazırlık/özel maçlar sezon ve puan durumuna işlemez. Turnuva maçları kariyerde ayrı “Turnuvalar” sekmesinde görünür.</span>
                 </div>
-                <button className="primary" onClick={createSpecialMatch}>Özel Maçı Başlat</button>
+                <button className="primary" onClick={createSpecialMatch}>Maçı Operatör Akışına Al</button>
               </div>
               <button onClick={() => setFlowStep("VENUE")}>Salon Seçimine Geri Dön</button>
             </div>
@@ -875,10 +879,11 @@ export default function OperatorPage() {
           {flowStep === "ROSTER" && activeMatch && (
             <div className="setup-section">
               <h2>4. Operatör Tarafı ve Maç Kadrosu</h2>
-              {activeMatch.competitionType === "SPECIAL_MATCH" || activeMatch.competitionType === "FRIENDLY" ? (
+              {(activeMatch.competitionType === "SPECIAL_MATCH" || activeMatch.competitionType === "FRIENDLY" || activeMatch.competitionType === "TOURNAMENT") ? (
                 <div className="info-box">
-                  <b>Özel/Hazırlık Maçı</b><br />Bu maç puan durumuna işlemez. Şut haritası, faul haritası, oyuncu ve takım maç istatistikleri kendi içinde tutulur.
-                  <br />Bu maç sezon istatistiğine işlemez. Oyuncu profilinde “Özel/Hazırlık Maçları” bölümünde ayrı görünür.
+                  <b>{activeMatch.competitionType === "TOURNAMENT" ? "Turnuva Maçı" : "Özel/Hazırlık Maçı"}</b><br />
+                  {activeMatch.competitionType === "TOURNAMENT" ? "Bu maç oyuncu ve takım kartında Turnuvalar sekmesine ayrılır." : "Bu maç puan durumuna işlemez. Şut haritası, faul haritası, oyuncu ve takım maç istatistikleri kendi içinde tutulur."}
+                  <br />{activeMatch.competitionType === "TOURNAMENT" ? "Turnuva kadro limiti resmi maç gibi 12 oyuncudur." : "Bu maç sezon istatistiğine işlemez. Oyuncu profilinde Özel/Hazırlık Maçları bölümünde ayrı görünür."}
                 </div>
               ) : null}
               <div className="side-grid">
@@ -966,7 +971,9 @@ export default function OperatorPage() {
               : 0}
           </small>
           {activeMatch?.competitionType === "SPECIAL_MATCH" || activeMatch?.competitionType === "FRIENDLY" ? (
-            <small>ÖZEL MAÇ • Puan/sezon tablosuna işlemez</small>
+            <small>ÖZEL/HAZIRLIK • Puan/sezon tablosuna işlemez</small>
+          ) : activeMatch?.competitionType === "TOURNAMENT" ? (
+            <small>TURNUVA • Kariyerde ayrı sekmede</small>
           ) : null}
           <button onClick={toggleOnline}>
             {online ? "Offline Yap" : "Online Yap"}
