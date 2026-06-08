@@ -244,12 +244,13 @@ export default async function CompetitionsPage() {
       <div className="topbar">
         <b>NONSTOP Organizasyon Yönetimi</b>
         <div style={{ display: 'flex', gap: 12 }}>
+          <Link href="/mini-admin">Mini Admin</Link>
           <Link href="/standings">Puan Durumu</Link>
           <Link href="/dashboard">Dashboard</Link>
         </div>
       </div>
 
-      <section className="card">
+      <section id="create-competition" className="card">
         <h1>Lig / Turnuva / Özel Maç Oluştur</h1>
         <p style={{ marginTop: 6 }}>Her il kendi bazında çalışır. A ve B ligleri birbirinden bağımsızdır. İsim değişse bile kayıtlar ID ile bağlı kalır.</p>
         {competitionsRes.error ? <p style={{ color: '#b91c1c' }}>Supabase hata: {competitionsRes.error.message}</p> : null}
@@ -319,7 +320,7 @@ export default async function CompetitionsPage() {
         </form>
       </section>
 
-      <section className="card">
+      <section id="add-team" className="card">
         <h2>Organizasyona Takım Ekle</h2>
         <form action={addTeamToCompetition} style={{ ...formGrid, marginTop: 16 }}>
           <label>Organizasyon
@@ -344,7 +345,7 @@ export default async function CompetitionsPage() {
         </form>
       </section>
 
-      <section className="card">
+      <section id="create-match" className="card">
         <h2>Resmi / Turnuva Maçı Oluştur</h2>
         <p>Buradan oluşturulan maçlar aynı gün ve salonda operatör ekranına otomatik düşer. Resmi ve turnuva maçları 12 kişilik kadro kullanır.</p>
         {matchesRes.error ? <p style={{ color: '#b91c1c' }}>Maç listesi hata: {matchesRes.error.message}</p> : null}
@@ -411,7 +412,7 @@ export default async function CompetitionsPage() {
         </div>
       </section>
 
-      <section className="card">
+      <section id="matches" className="card">
         <h2>Oluşturulan Maçlar</h2>
         <p>Bu listedeki maçlar operatör ekranında İl → Salon → Bugünkü Maçlar akışında görünür.</p>
         <div className="stats-table-wrap">
@@ -438,7 +439,7 @@ export default async function CompetitionsPage() {
         </div>
       </section>
 
-      <section className="card">
+      <section id="teams" className="card">
         <h2>Eklenen Takımlar</h2>
         <div className="stats-table-wrap">
           <table className="stats-table">

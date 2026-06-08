@@ -5,7 +5,7 @@ export default function DashboardPage() {
     <main className="dashboard">
       <div className="topbar">
         <b>NONSTOP Dashboard</b>
-        <div style={{ display: 'flex', gap: 12 }}><Link href="/competitions">Mini Admin</Link><Link href="/operator">Operatör Ekranı</Link><Link href="/live">Canlı Skor</Link><Link href="/standings">Puan Durumu</Link></div>
+        <div style={{ display: 'flex', gap: 12 }}><Link href="/mini-admin">Mini Admin</Link><Link href="/operator">Operatör Ekranı</Link><Link href="/live">Canlı Skor</Link><Link href="/standings">Puan Durumu</Link></div>
       </div>
 
       <div className="grid four">

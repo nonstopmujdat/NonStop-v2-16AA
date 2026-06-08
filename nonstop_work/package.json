@@ -1,6 +1,6 @@
 {
-  "name": "nonstop-v2-1-22af-3-mini-admin-ui-completion",
-  "version": "2.1.22-af-3",
+  "name": "nonstop-v2-1-22af-4-mini-admin-react-ui",
+  "version": "2.1.22-af-4",
   "private": true,
   "scripts": {
     "dev": "next dev",
