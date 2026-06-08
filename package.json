@@ -1,6 +1,6 @@
 {
-  "name": "nonstop-v2-1-22ac-operator-match-flow",
-  "version": "2.1.22-ac-operator-match-flow",
+  "name": "nonstop-v2-1-22ad-2-special-roster-stats",
+  "version": "2.1.22-ad-2-special-roster-stats",
   "private": true,
   "scripts": {
     "dev": "next dev",

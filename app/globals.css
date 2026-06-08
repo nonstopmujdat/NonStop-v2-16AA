@@ -493,3 +493,14 @@ a{color:inherit;text-decoration:none}
 .check-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.check-grid label{background:#13243c;border:1px solid var(--line);border-radius:13px;padding:11px;font-weight:900;cursor:pointer}.check-grid label.checked{border-color:var(--green);background:rgba(34,197,94,.12)}
 .warning-box{background:rgba(239,68,68,.12);border:1px solid var(--red);color:#fecaca;border-radius:14px;padding:12px;font-weight:900}
 @media(max-width:800px){.side-grid,.check-grid{grid-template-columns:1fr}.setup-card{padding:16px}.setup-card h1{font-size:24px}}
+
+/* V2.1.22AD Special/Friendly Match Mode */
+.special-match-box,.info-box{background:#07111f;border:1px solid var(--orange);border-radius:18px;padding:14px;margin:14px 0;display:grid;gap:10px}
+.special-match-box h3{margin:0;color:var(--yellow)}
+.special-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.special-grid label{display:grid;gap:5px;color:var(--muted);font-weight:800;font-size:13px}
+.special-grid input{background:#0b1728;color:white;border:1px solid var(--line);border-radius:12px;padding:10px}
+.checkbox-line{grid-column:1/-1;display:flex!important;align-items:center;gap:8px;color:var(--text)!important}
+.checkbox-line input{width:auto}
+.info-box{border-color:var(--blue);color:var(--text);line-height:1.4}
+@media(max-width:800px){.special-grid{grid-template-columns:1fr}}

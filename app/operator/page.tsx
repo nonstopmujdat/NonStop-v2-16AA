@@ -33,7 +33,19 @@ type OperatorSide = "HOME" | "AWAY";
 type FlowStep = "CITY" | "VENUE" | "MATCH" | "ROSTER" | "STARTERS" | "GAME";
 
 type DemoVenue = { id: number; city: string; name: string };
-type DemoMatch = { id:number; time:string; city:string; venue:string; home:string; away:string; category:string; competition:string };
+type DemoMatch = {
+  id:number;
+  time:string;
+  city:string;
+  venue:string;
+  home:string;
+  away:string;
+  category:string;
+  competition:string;
+  competitionType?: "LEAGUE" | "TOURNAMENT" | "FRIENDLY" | "SPECIAL_MATCH";
+  countsForStandings?: boolean;
+  countsForSeasonStats?: boolean;
+};
 const DEMO_CITIES = ["Bursa", "İstanbul", "İzmir", "Ankara", "Kocaeli"];
 const DEMO_VENUES: DemoVenue[] = [
   { id: 1, city: "Bursa", name: "Nilüfer Spor Salonu" },
@@ -45,10 +57,10 @@ const DEMO_VENUES: DemoVenue[] = [
   { id: 7, city: "Kocaeli", name: "Şehit Polis Recep Topaloğlu" },
 ];
 const DEMO_TODAY_MATCHES: DemoMatch[] = [
-  { id: 1, time: "10:00", city: "Bursa", venue: "Nilüfer Spor Salonu", home: "FİNAL SPOR U14", away: "TOFAŞ U14", category: "U14", competition: "Bursa U14 A Ligi" },
-  { id: 2, time: "12:00", city: "Bursa", venue: "Nilüfer Spor Salonu", home: "GEMLİK U14", away: "BURSA BASKET U14", category: "U14", competition: "Bursa U14 A Ligi" },
-  { id: 3, time: "14:00", city: "Bursa", venue: "Tofaş Spor Salonu", home: "TOFAŞ U16", away: "FİNAL SPOR U16", category: "U16", competition: "Bursa U16 A Ligi" },
-  { id: 4, time: "11:00", city: "İstanbul", venue: "Sinan Erdem Yan Salon", home: "İSTANBUL YILDIZLAR U14", away: "BASKET AKADEMİ U14", category: "U14", competition: "İstanbul U14 A Ligi" },
+  { id: 1, time: "10:00", city: "Bursa", venue: "Nilüfer Spor Salonu", home: "FİNAL SPOR U14", away: "TOFAŞ U14", category: "U14", competition: "Bursa U14 A Ligi", competitionType: "LEAGUE", countsForStandings: true, countsForSeasonStats: true },
+  { id: 2, time: "12:00", city: "Bursa", venue: "Nilüfer Spor Salonu", home: "GEMLİK U14", away: "BURSA BASKET U14", category: "U14", competition: "Bursa U14 A Ligi", competitionType: "LEAGUE", countsForStandings: true, countsForSeasonStats: true },
+  { id: 3, time: "14:00", city: "Bursa", venue: "Tofaş Spor Salonu", home: "TOFAŞ U16", away: "FİNAL SPOR U16", category: "U16", competition: "Bursa U16 A Ligi", competitionType: "LEAGUE", countsForStandings: true, countsForSeasonStats: true },
+  { id: 4, time: "11:00", city: "İstanbul", venue: "Sinan Erdem Yan Salon", home: "İSTANBUL YILDIZLAR U14", away: "BASKET AKADEMİ U14", category: "U14", competition: "İstanbul U14 A Ligi", competitionType: "LEAGUE", countsForStandings: true, countsForSeasonStats: true },
 ];
 const HOME_PLAYERS = Array.from({ length: 26 }, (_, i) => {
   const jersey = i + 4;
@@ -60,13 +72,18 @@ const AWAY_PLAYERS = Array.from({ length: 30 }, (_, i) => {
   const names = ["Ali", "Efe", "Mert", "Can", "Deniz", "Kaan", "Aras", "Bora", "Eren", "Yiğit", "Alp", "Ozan", "Emirhan", "Taha", "Miraç", "Kutay", "Atlas", "Arda", "Çağan", "Koray", "Rıza", "Salih", "Onur", "Talha", "Yaman", "Poyraz", "Mete", "Eymen", "Akın", "Bartu"];
   return `#${jersey} ${names[i]}`;
 });
-const MAX_MATCH_ROSTER = 12;
+const OFFICIAL_MATCH_ROSTER_LIMIT = 12;
+const SPECIAL_MATCH_ROSTER_LIMIT = 24;
 
 export default function OperatorPage() {
   const [flowStep, setFlowStep] = useState<FlowStep>("CITY");
   const [selectedCity, setSelectedCity] = useState(DEMO_CITIES[0]);
   const cityVenues = DEMO_VENUES.filter((v) => v.city === selectedCity);
   const [selectedVenue, setSelectedVenue] = useState(DEMO_VENUES[0].name);
+  const [specialHomeName, setSpecialHomeName] = useState("FİNAL SPOR U14");
+  const [specialAwayName, setSpecialAwayName] = useState("KARMA TAKIM U16");
+  const [specialMatchName, setSpecialMatchName] = useState("Hazırlık Maçı");
+  const [specialCountsForSeason, setSpecialCountsForSeason] = useState(false);
   const [activeMatch, setActiveMatch] = useState<DemoMatch | null>(null);
   const [operatorSide, setOperatorSide] = useState<OperatorSide>("HOME");
   const [rosterChecked, setRosterChecked] = useState<string[]>(HOME_PLAYERS.slice(0, 8));
@@ -117,6 +134,8 @@ export default function OperatorPage() {
   const controlledTeamName = activeMatch ? (operatorSide === "HOME" ? activeMatch.home : activeMatch.away) : "TAKIM";
   const opponentTeamName = activeMatch ? (operatorSide === "HOME" ? activeMatch.away : activeMatch.home) : "DİĞER TAKIM";
   const canStartClock = operatorSide === "HOME";
+  const isSpecialOrFriendly = activeMatch?.competitionType === "SPECIAL_MATCH" || activeMatch?.competitionType === "FRIENDLY";
+  const matchRosterLimit = isSpecialOrFriendly ? SPECIAL_MATCH_ROSTER_LIMIT : OFFICIAL_MATCH_ROSTER_LIMIT;
 
   const periodLabel =
     quarter <= 4 ? `${quarter}. ÇEYREK` : `UZATMA ${quarter - 4}`;
@@ -736,8 +755,8 @@ export default function OperatorPage() {
         setStarterChecked((starters) => starters.filter((p) => p !== player));
         return prev.filter((p) => p !== player);
       }
-      if (prev.length >= MAX_MATCH_ROSTER) {
-        setForfeitWarning(`Maç kadrosu en fazla ${MAX_MATCH_ROSTER} oyuncu olabilir.`);
+      if (prev.length >= matchRosterLimit) {
+        setForfeitWarning(`${isSpecialOrFriendly ? "Özel/hazırlık maçında" : "Resmi maçta"} maç kadrosu en fazla ${matchRosterLimit} oyuncu olabilir.`);
         return prev;
       }
       setForfeitWarning("");
@@ -752,6 +771,31 @@ export default function OperatorPage() {
       if (prev.length >= 5) return prev;
       return [...prev, player];
     });
+  }
+
+
+  function createSpecialMatch() {
+    const home = specialHomeName.trim() || "EV SAHİBİ";
+    const away = specialAwayName.trim() || "MİSAFİR / KARMA";
+    const specialMatch: DemoMatch = {
+      id: 9000 + Date.now(),
+      time: "Özel",
+      city: selectedCity,
+      venue: selectedVenue,
+      home,
+      away,
+      category: "SERBEST",
+      competition: specialMatchName.trim() || "Özel / Hazırlık Maçı",
+      competitionType: "SPECIAL_MATCH",
+      countsForStandings: false,
+      countsForSeasonStats: false,
+    };
+    setActiveMatch(specialMatch);
+    setOperatorSide("HOME");
+    setRosterChecked(HOME_PLAYERS.slice(0, 8));
+    setStarterChecked(HOME_PLAYERS.slice(0, 5));
+    setForfeitWarning("");
+    setFlowStep("ROSTER");
   }
 
   function confirmStarters() {
@@ -772,7 +816,7 @@ export default function OperatorPage() {
       <div className="operator-setup">
         <div className="setup-card">
           <h1>NONSTOP Operatör Akışı</h1>
-          <p>İl seç → salon seç → bugünkü maç → görev tarafı → maç kadrosu → ilk 5 → maç ekranı</p>
+          <p>İl seç → salon seç → bugünkü maç veya özel maç → görev tarafı → maç kadrosu → ilk 5 → maç ekranı</p>
 
           {flowStep === "CITY" && (
             <div className="setup-section">
@@ -812,6 +856,18 @@ export default function OperatorPage() {
                   <small>{m.competition}</small>
                 </button>
               ))}
+
+              <div className="special-match-box">
+                <h3>Supervisor Özel / Hazırlık Maçı</h3>
+                <p>U14 - U16, karma takım veya resmi fikstüre girmeyen maçlar için. Bu maç lig puan durumuna işlemez; kendi içinde istatistik ve şut haritası tutar.</p>
+                <div className="special-grid">
+                  <label>Maç adı<input value={specialMatchName} onChange={(e) => setSpecialMatchName(e.target.value)} /></label>
+                  <label>1. Takım<input value={specialHomeName} onChange={(e) => setSpecialHomeName(e.target.value)} /></label>
+                  <label>2. Takım / Karma<input value={specialAwayName} onChange={(e) => setSpecialAwayName(e.target.value)} /></label>
+                  <span className="checkbox-line">Sezon istatistiğine işlemez; ayrı özel/hazırlık istatistiği tutulur.</span>
+                </div>
+                <button className="primary" onClick={createSpecialMatch}>Özel Maçı Başlat</button>
+              </div>
               <button onClick={() => setFlowStep("VENUE")}>Salon Seçimine Geri Dön</button>
             </div>
           )}
@@ -819,12 +875,18 @@ export default function OperatorPage() {
           {flowStep === "ROSTER" && activeMatch && (
             <div className="setup-section">
               <h2>4. Operatör Tarafı ve Maç Kadrosu</h2>
+              {activeMatch.competitionType === "SPECIAL_MATCH" || activeMatch.competitionType === "FRIENDLY" ? (
+                <div className="info-box">
+                  <b>Özel/Hazırlık Maçı</b><br />Bu maç puan durumuna işlemez. Şut haritası, faul haritası, oyuncu ve takım maç istatistikleri kendi içinde tutulur.
+                  <br />Bu maç sezon istatistiğine işlemez. Oyuncu profilinde “Özel/Hazırlık Maçları” bölümünde ayrı görünür.
+                </div>
+              ) : null}
               <div className="side-grid">
                 <button className={operatorSide === "HOME" ? "active" : ""} onClick={() => { setOperatorSide("HOME"); setRosterChecked(HOME_PLAYERS.slice(0, 8)); setStarterChecked(HOME_PLAYERS.slice(0, 5)); }}>Ev Sahibi Operatörü<br/><small>Süreyi başlatabilir</small></button>
                 <button className={operatorSide === "AWAY" ? "active" : ""} onClick={() => { setOperatorSide("AWAY"); setRosterChecked(AWAY_PLAYERS.slice(0, 8)); setStarterChecked(AWAY_PLAYERS.slice(0, 5)); }}>Misafir Operatörü<br/><small>Süreyi başlatamaz</small></button>
               </div>
               <h3>{controlledTeamName} takım listesinden maç kadrosunu seç</h3>
-              <p>Takım listesinde <b>{sidePlayers.length}</b> oyuncu olabilir. Maç kadrosu ise <b>{rosterChecked.length}/{MAX_MATCH_ROSTER}</b>. En az 5, en fazla 12 oyuncu seçilebilir.</p>
+              <p>Takım listesinde <b>{sidePlayers.length}</b> oyuncu olabilir. Maç kadrosu ise <b>{rosterChecked.length}/{matchRosterLimit}</b>. Resmi maçta en fazla 12, özel/hazırlık maçında en fazla 24 oyuncu seçilebilir. En az 5 oyuncu zorunludur.</p>
               <div className="check-grid">
                 {sidePlayers.map((p) => (
                   <label key={p} className={rosterChecked.includes(p) ? "checked" : ""}>
@@ -834,7 +896,7 @@ export default function OperatorPage() {
               </div>
               <button className="primary" onClick={() => {
                 if (rosterChecked.length < 5) { setForfeitWarning(`${controlledTeamName} 5 oyuncu bildirmedi. Hükmen yenilgi riski var.`); return; }
-                if (rosterChecked.length > MAX_MATCH_ROSTER) { setForfeitWarning(`Maç kadrosu en fazla ${MAX_MATCH_ROSTER} oyuncu olabilir.`); return; }
+                if (rosterChecked.length > matchRosterLimit) { setForfeitWarning(`Maç kadrosu en fazla ${matchRosterLimit} oyuncu olabilir.`); return; }
                 setForfeitWarning(""); setFlowStep("STARTERS");
               }}>Kadro Tamam</button>
               {forfeitWarning && <div className="warning-box">{forfeitWarning}</div>}
@@ -844,7 +906,7 @@ export default function OperatorPage() {
           {flowStep === "STARTERS" && (
             <div className="setup-section">
               <h2>5. İlk 5 Belirle</h2>
-              <p>Seçilen 12 kişilik maç kadrosundan sahaya çıkacak tam 5 oyuncu seçilmeli. Şu an: <b>{starterChecked.length}/5</b></p>
+              <p>Seçilen maç kadrosundan sahaya çıkacak tam 5 oyuncu seçilmeli. Şu an: <b>{starterChecked.length}/5</b></p>
               <div className="check-grid starters">
                 {rosterChecked.map((p) => (
                   <label key={p} className={starterChecked.includes(p) ? "checked" : ""}>
@@ -903,6 +965,9 @@ export default function OperatorPage() {
               ? getQueue().filter((e) => e.status !== "synced").length
               : 0}
           </small>
+          {activeMatch?.competitionType === "SPECIAL_MATCH" || activeMatch?.competitionType === "FRIENDLY" ? (
+            <small>ÖZEL MAÇ • Puan/sezon tablosuna işlemez</small>
+          ) : null}
           <button onClick={toggleOnline}>
             {online ? "Offline Yap" : "Online Yap"}
           </button>
