@@ -1,6 +1,6 @@
 {
-  "name": "nonstop-v2-1-22ae-2-operator-special-tournament",
-  "version": "2.1.22-ae-2",
+  "name": "nonstop-v2-1-22af-operator-final-mini-admin",
+  "version": "2.1.22-af",
   "private": true,
   "scripts": {
     "dev": "next dev",
