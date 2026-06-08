@@ -78,8 +78,14 @@ const SPECIAL_MATCH_ROSTER_LIMIT = 24;
 export default function OperatorPage() {
   const [flowStep, setFlowStep] = useState<FlowStep>("CITY");
   const [selectedCity, setSelectedCity] = useState(DEMO_CITIES[0]);
-  const cityVenues = DEMO_VENUES.filter((v) => v.city === selectedCity);
   const [selectedVenue, setSelectedVenue] = useState(DEMO_VENUES[0].name);
+  const [adminCities, setAdminCities] = useState<string[]>([]);
+  const [adminVenues, setAdminVenues] = useState<DemoVenue[]>([]);
+  const [adminMatches, setAdminMatches] = useState<DemoMatch[]>([]);
+  const [queueInfo, setQueueInfo] = useState("Demo maç listesi açık.");
+  const cityOptions = adminCities.length ? adminCities : DEMO_CITIES;
+  const allVenuesForSelect = adminVenues.length ? adminVenues : DEMO_VENUES;
+  const cityVenues = allVenuesForSelect.filter((v) => v.city === selectedCity);
   const [specialHomeName, setSpecialHomeName] = useState("FİNAL SPOR U14");
   const [specialAwayName, setSpecialAwayName] = useState("KARMA TAKIM U16");
   const [specialMatchName, setSpecialMatchName] = useState("Hazırlık Maçı");
@@ -131,7 +137,8 @@ export default function OperatorPage() {
   const clickPoints = useRef<1 | 2 | 3 | null>(null);
   const [markers, setMarkers] = useState<CourtMarker[]>([]);
 
-  const todaysVenueMatches = DEMO_TODAY_MATCHES.filter((m) => m.city === selectedCity && m.venue === selectedVenue);
+  const sourceMatches = adminMatches.length ? adminMatches : DEMO_TODAY_MATCHES;
+  const todaysVenueMatches = sourceMatches.filter((m) => m.city === selectedCity && m.venue === selectedVenue);
   const controlledTeamName = activeMatch ? (operatorSide === "HOME" ? activeMatch.home : activeMatch.away) : "TAKIM";
   const opponentTeamName = activeMatch ? (operatorSide === "HOME" ? activeMatch.away : activeMatch.home) : "DİĞER TAKIM";
   const canStartClock = operatorSide === "HOME";
@@ -751,6 +758,44 @@ export default function OperatorPage() {
       (courtTab === "fouls" && m.kind === "foul"),
   );
 
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadOperatorQueue() {
+      try {
+        const params = new URLSearchParams();
+        if (selectedCity) params.set("city", selectedCity);
+        if (selectedVenue) params.set("venue", selectedVenue);
+        const res = await fetch(`/api/operator-queue?${params.toString()}`, { cache: "no-store" });
+        const json = await res.json();
+        if (cancelled || !json?.ok) return;
+        const apiCities = (json.cities || []).map((c: any) => String(c.name || "")).filter(Boolean);
+        const apiVenues = (json.venues || []).map((v: any) => ({ id: Number(v.id), city: String(v.city || ""), name: String(v.name || "") })).filter((v: DemoVenue) => v.city && v.name);
+        const apiMatches = (json.matches || []).map((m: any) => ({
+          id: Number(m.id),
+          time: String(m.time || "Saat yok"),
+          city: String(m.city || ""),
+          venue: String(m.venue || ""),
+          home: String(m.home || "Ev Sahibi"),
+          away: String(m.away || "Misafir"),
+          category: String(m.category || "-"),
+          competition: String(m.competition || "Resmi Maç"),
+          competitionType: (m.competitionType || "LEAGUE") as DemoMatch["competitionType"],
+          countsForStandings: m.countsForStandings ?? true,
+          countsForSeasonStats: m.countsForSeasonStats ?? true,
+        })).filter((m: DemoMatch) => m.city && m.venue);
+        setAdminCities(apiCities);
+        setAdminVenues(apiVenues);
+        setAdminMatches(apiMatches);
+        setQueueInfo(apiMatches.length ? "Mini Admin maçları yüklendi." : "Bugün seçili salonda Mini Admin maçı yok. Demo liste açık olabilir.");
+      } catch (err: any) {
+        setQueueInfo(`Mini Admin maçları alınamadı: ${String(err?.message || err).slice(0, 80)}`);
+      }
+    }
+    loadOperatorQueue();
+    return () => { cancelled = true; };
+  }, [selectedCity, selectedVenue]);
+
   function toggleRosterPlayer(player: string) {
     setRosterChecked((prev) => {
       if (prev.includes(player)) {
@@ -828,10 +873,10 @@ export default function OperatorPage() {
               <select value={selectedCity} onChange={(e) => {
                 const nextCity = e.target.value;
                 setSelectedCity(nextCity);
-                const firstVenue = DEMO_VENUES.find((v) => v.city === nextCity)?.name || "";
+                const firstVenue = allVenuesForSelect.find((v) => v.city === nextCity)?.name || "";
                 setSelectedVenue(firstVenue);
               }}>
-                {DEMO_CITIES.map((c) => <option key={c}>{c}</option>)}
+                {cityOptions.map((c) => <option key={c}>{c}</option>)}
               </select>
               <button className="primary" onClick={() => setFlowStep("VENUE")}>Salon Seçimine Geç</button>
             </div>
@@ -852,6 +897,8 @@ export default function OperatorPage() {
           {flowStep === "MATCH" && (
             <div className="setup-section">
               <h2>3. Bugünkü Maç Sırası</h2>
+              <p>{queueInfo}</p>
+              {todaysVenueMatches.length === 0 ? <div className="warning-box">Bu salon için bugün maç bulunamadı. Mini Admin’den maç oluşturduktan sonra tekrar deneyin.</div> : null}
               {todaysVenueMatches.map((m, index) => (
                 <button key={m.id} className="match-card" onClick={() => { setActiveMatch(m); setFlowStep("ROSTER"); }}>
                   <b>{index + 1}. Maç • {m.time}</b>

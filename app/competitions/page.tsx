@@ -31,6 +31,20 @@ type CompetitionTeamRow = {
   is_active: boolean | null;
 };
 
+type MatchQueueRow = {
+  match_id: number;
+  match_date: string | null;
+  match_time: string | null;
+  venue_name: string | null;
+  city_name: string | null;
+  home_team_name: string | null;
+  away_team_name: string | null;
+  competition_name: string | null;
+  competition_type: string | null;
+  category_name: string | null;
+  status: string | null;
+};
+
 function safeId(value: FormDataEntryValue | null) {
   const raw = String(value || '').trim();
   if (!raw) return null;
@@ -106,7 +120,7 @@ async function addTeamToCompetition(formData: FormData) {
     .eq('id', competition_id)
     .single();
 
-  await supabase.from('competition_teams').upsert({
+  const payload = {
     competition_id,
     team_id,
     club_id,
@@ -115,7 +129,20 @@ async function addTeamToCompetition(formData: FormData) {
     category_id: competition?.category_id || null,
     league_level: competition?.league_level || 'NONE',
     is_active: true,
-  }, { onConflict: 'competition_id,team_id' });
+  };
+
+  const { data: existing } = await supabase
+    .from('competition_teams')
+    .select('id')
+    .eq('competition_id', competition_id)
+    .eq('team_id', team_id)
+    .maybeSingle();
+
+  if (existing?.id) {
+    await supabase.from('competition_teams').update(payload).eq('id', existing.id);
+  } else {
+    await supabase.from('competition_teams').insert(payload);
+  }
   revalidatePath('/competitions');
 }
 
@@ -127,6 +154,36 @@ async function removeTeamFromCompetition(formData: FormData) {
 
   await supabase.from('competition_teams').update({ is_active: false }).eq('id', id);
   revalidatePath('/competitions');
+}
+
+
+async function createOfficialMatch(formData: FormData) {
+  'use server';
+  const supabase = getSupabaseAdmin();
+  const competition_id = safeId(formData.get('competition_id'));
+  const venue_id = safeId(formData.get('venue_id'));
+  const home_team_id = safeId(formData.get('home_team_id'));
+  const away_team_id = safeId(formData.get('away_team_id'));
+  const match_date = String(formData.get('match_date') || '').trim();
+  const match_time = String(formData.get('match_time') || '').trim();
+
+  if (!competition_id || !venue_id || !home_team_id || !away_team_id || !match_date || !match_time) return;
+
+  const { error } = await supabase.rpc('create_official_match_from_admin', {
+    p_competition_id: competition_id,
+    p_venue_id: venue_id,
+    p_match_date: match_date,
+    p_match_time: match_time,
+    p_home_team_id: home_team_id,
+    p_away_team_id: away_team_id,
+  });
+
+  if (error) {
+    console.error('createOfficialMatch failed', error.message);
+    return;
+  }
+  revalidatePath('/competitions');
+  revalidatePath('/operator');
 }
 
 function optionLabel(row: OptionRow, fallback: string) {
@@ -144,14 +201,16 @@ export default async function CompetitionsPage() {
   }
 
   const supabase = getSupabaseAdmin();
-  const [competitionsRes, citiesRes, seasonsRes, categoriesRes, teamsRes, clubsRes, compTeamsRes] = await Promise.all([
+  const [competitionsRes, citiesRes, seasonsRes, categoriesRes, teamsRes, clubsRes, venuesRes, compTeamsRes, matchesRes] = await Promise.all([
     supabase.from('live_competitions').select('*').order('city_name', { ascending: true }).order('category_name', { ascending: true }).order('competition_name', { ascending: true }),
     supabase.from('cities').select('id,name').order('name', { ascending: true }),
     supabase.from('seasons').select('id,name').order('name', { ascending: false }),
     supabase.from('categories').select('id,name').order('name', { ascending: true }),
     supabase.from('teams').select('id,name').order('name', { ascending: true }),
     supabase.from('clubs').select('id,name').order('name', { ascending: true }),
-    supabase.from('competition_teams').select('id, competition_id, is_active, league_level, competitions(name), teams(name), clubs(name), cities(name), categories(name)').eq('is_active', true).order('id', { ascending: false }).limit(100),
+    supabase.from('venues').select('id,name').order('name', { ascending: true }),
+    supabase.from('mini_admin_competition_teams').select('*').eq('is_active', true).order('competition_name', { ascending: true }).order('team_name', { ascending: true }).limit(100),
+    supabase.from('operator_match_queue').select('*').order('match_date', { ascending: false }).order('match_order', { ascending: true }).limit(100),
   ]);
 
   const rows = (competitionsRes.data || []) as CompetitionRow[];
@@ -160,15 +219,18 @@ export default async function CompetitionsPage() {
   const categories = (categoriesRes.data || []) as OptionRow[];
   const teams = (teamsRes.data || []) as OptionRow[];
   const clubs = (clubsRes.data || []) as OptionRow[];
+  const venues = (venuesRes.data || []) as OptionRow[];
+  const matchRows = (matchesRes.data || []) as MatchQueueRow[];
+  const officialCompetitions = rows.filter((row) => row.competition_type === 'LEAGUE' || row.competition_type === 'TOURNAMENT' || row.competition_type === 'SEASON' || row.competition_type === 'SEASON_GROUP');
   const rawCompTeams = (compTeamsRes.data || []) as any[];
   const compTeams: CompetitionTeamRow[] = rawCompTeams.map((item) => ({
-    id: item.id,
+    id: item.competition_team_id || item.id,
     competition_id: item.competition_id,
-    competition_name: item.competitions?.name || null,
-    city_name: item.cities?.name || null,
-    category_name: item.categories?.name || null,
-    team_name: item.teams?.name || null,
-    club_name: item.clubs?.name || null,
+    competition_name: item.competition_name || null,
+    city_name: item.city_name || null,
+    category_name: item.category_name || null,
+    team_name: item.team_name || null,
+    club_name: item.club_name || null,
     league_level: item.league_level || null,
     is_active: item.is_active,
   }));
@@ -182,12 +244,13 @@ export default async function CompetitionsPage() {
       <div className="topbar">
         <b>NONSTOP Organizasyon Yönetimi</b>
         <div style={{ display: 'flex', gap: 12 }}>
+          <Link href="/mini-admin">Mini Admin</Link>
           <Link href="/standings">Puan Durumu</Link>
           <Link href="/dashboard">Dashboard</Link>
         </div>
       </div>
 
-      <section className="card">
+      <section id="create-competition" className="card">
         <h1>Lig / Turnuva / Özel Maç Oluştur</h1>
         <p style={{ marginTop: 6 }}>Her il kendi bazında çalışır. A ve B ligleri birbirinden bağımsızdır. İsim değişse bile kayıtlar ID ile bağlı kalır.</p>
         {competitionsRes.error ? <p style={{ color: '#b91c1c' }}>Supabase hata: {competitionsRes.error.message}</p> : null}
@@ -257,7 +320,7 @@ export default async function CompetitionsPage() {
         </form>
       </section>
 
-      <section className="card">
+      <section id="add-team" className="card">
         <h2>Organizasyona Takım Ekle</h2>
         <form action={addTeamToCompetition} style={{ ...formGrid, marginTop: 16 }}>
           <label>Organizasyon
@@ -279,6 +342,45 @@ export default async function CompetitionsPage() {
             </select>
           </label>
           <button style={{ ...buttonStyle, background: '#16a34a', color: 'white' }} type="submit">Takım Ekle</button>
+        </form>
+      </section>
+
+      <section id="create-match" className="card">
+        <h2>Resmi / Turnuva Maçı Oluştur</h2>
+        <p>Buradan oluşturulan maçlar aynı gün ve salonda operatör ekranına otomatik düşer. Resmi ve turnuva maçları 12 kişilik kadro kullanır.</p>
+        {matchesRes.error ? <p style={{ color: '#b91c1c' }}>Maç listesi hata: {matchesRes.error.message}</p> : null}
+        <form action={createOfficialMatch} style={{ ...formGrid, marginTop: 16 }}>
+          <label>Organizasyon
+            <select name="competition_id" required style={inputStyle}>
+              <option value="">Seç</option>
+              {officialCompetitions.map((row) => <option key={row.id} value={row.id}>{row.competition_name} / {row.city_name} / {row.league_level}</option>)}
+            </select>
+          </label>
+          <label>Salon
+            <select name="venue_id" required style={inputStyle}>
+              <option value="">Seç</option>
+              {venues.map((row) => <option key={row.id} value={row.id}>{optionLabel(row, 'Salon')}</option>)}
+            </select>
+          </label>
+          <label>Tarih
+            <input name="match_date" required type="date" style={inputStyle} />
+          </label>
+          <label>Saat
+            <input name="match_time" required type="time" style={inputStyle} />
+          </label>
+          <label>Ev Sahibi
+            <select name="home_team_id" required style={inputStyle}>
+              <option value="">Seç</option>
+              {teams.map((row) => <option key={row.id} value={row.id}>{optionLabel(row, 'Takım')}</option>)}
+            </select>
+          </label>
+          <label>Misafir
+            <select name="away_team_id" required style={inputStyle}>
+              <option value="">Seç</option>
+              {teams.map((row) => <option key={row.id} value={row.id}>{optionLabel(row, 'Takım')}</option>)}
+            </select>
+          </label>
+          <button style={{ ...buttonStyle, background: '#7c3aed', color: 'white' }} type="submit">Maçı Oluştur</button>
         </form>
       </section>
 
@@ -310,7 +412,34 @@ export default async function CompetitionsPage() {
         </div>
       </section>
 
-      <section className="card">
+      <section id="matches" className="card">
+        <h2>Oluşturulan Maçlar</h2>
+        <p>Bu listedeki maçlar operatör ekranında İl → Salon → Bugünkü Maçlar akışında görünür.</p>
+        <div className="stats-table-wrap">
+          <table className="stats-table">
+            <thead>
+              <tr><th>Tarih</th><th>Saat</th><th>İl</th><th>Salon</th><th>Organizasyon</th><th>Maç</th><th>Tip</th><th>Durum</th></tr>
+            </thead>
+            <tbody>
+              {matchRows.map((row) => (
+                <tr key={row.match_id}>
+                  <td>{row.match_date || '-'}</td>
+                  <td>{row.match_time || '-'}</td>
+                  <td>{row.city_name || '-'}</td>
+                  <td>{row.venue_name || '-'}</td>
+                  <td>{row.competition_name || '-'}</td>
+                  <td><b>{row.home_team_name || '-'} - {row.away_team_name || '-'}</b></td>
+                  <td>{typeLabel(row.competition_type)}</td>
+                  <td>{row.status || '-'}</td>
+                </tr>
+              ))}
+              {matchRows.length === 0 ? <tr><td colSpan={8}>Henüz maç oluşturulmadı.</td></tr> : null}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="teams" className="card">
         <h2>Eklenen Takımlar</h2>
         <div className="stats-table-wrap">
           <table className="stats-table">
