@@ -29,8 +29,27 @@ type CourtMarker = {
 };
 
 type CourtTab = "court" | "shots" | "fouls" | "heat";
+type OperatorSide = "HOME" | "AWAY";
+type FlowStep = "VENUE" | "MATCH" | "ROSTER" | "STARTERS" | "GAME";
+
+type DemoMatch = { id:number; time:string; venue:string; home:string; away:string; category:string; competition:string };
+const DEMO_VENUES = ["Nilüfer Spor Salonu", "Tofaş Spor Salonu", "Atatürk Spor Salonu"];
+const DEMO_TODAY_MATCHES: DemoMatch[] = [
+  { id: 1, time: "10:00", venue: "Nilüfer Spor Salonu", home: "FİNAL SPOR U14", away: "TOFAŞ U14", category: "U14", competition: "Bursa U14 A Ligi" },
+  { id: 2, time: "12:00", venue: "Nilüfer Spor Salonu", home: "GEMLİK U14", away: "BURSA BASKET U14", category: "U14", competition: "Bursa U14 A Ligi" },
+  { id: 3, time: "14:00", venue: "Tofaş Spor Salonu", home: "TOFAŞ U16", away: "FİNAL SPOR U16", category: "U16", competition: "Bursa U16 A Ligi" },
+];
+const HOME_PLAYERS = ["#4 Ahmet", "#5 Mehmet", "#6 Ali", "#7 Burak", "#8 Kerem", "#9 Ege", "#10 Okan", "#11 Mert", "#12 Can", "#13 Tuna", "#14 Emir", "#15 Arda"];
+const AWAY_PLAYERS = ["#4 Rakip Ali", "#5 Rakip Efe", "#6 Rakip Mert", "#7 Rakip Can", "#8 Rakip Deniz", "#9 Rakip Kaan", "#10 Rakip Aras", "#11 Rakip Bora", "#12 Rakip Eren", "#13 Rakip Yiğit", "#14 Rakip Alp", "#15 Rakip Ozan"];
 
 export default function OperatorPage() {
+  const [flowStep, setFlowStep] = useState<FlowStep>("VENUE");
+  const [selectedVenue, setSelectedVenue] = useState(DEMO_VENUES[0]);
+  const [activeMatch, setActiveMatch] = useState<DemoMatch | null>(null);
+  const [operatorSide, setOperatorSide] = useState<OperatorSide>("HOME");
+  const [rosterChecked, setRosterChecked] = useState<string[]>(HOME_PLAYERS.slice(0, 8));
+  const [starterChecked, setStarterChecked] = useState<string[]>(HOME_PLAYERS.slice(0, 5));
+  const [forfeitWarning, setForfeitWarning] = useState("");
   const [homeScore, setHomeScore] = useState(0);
   const [awayScore, setAwayScore] = useState(0);
   const [homeTeamFouls, setHomeTeamFouls] = useState(0);
@@ -71,6 +90,11 @@ export default function OperatorPage() {
   const clickTimer = useRef<any>(null);
   const clickPoints = useRef<1 | 2 | 3 | null>(null);
   const [markers, setMarkers] = useState<CourtMarker[]>([]);
+
+  const todaysVenueMatches = DEMO_TODAY_MATCHES.filter((m) => m.venue === selectedVenue);
+  const controlledTeamName = activeMatch ? (operatorSide === "HOME" ? activeMatch.home : activeMatch.away) : "TAKIM";
+  const opponentTeamName = activeMatch ? (operatorSide === "HOME" ? activeMatch.away : activeMatch.home) : "RAKİP";
+  const canStartClock = operatorSide === "HOME";
 
   const periodLabel =
     quarter <= 4 ? `${quarter}. ÇEYREK` : `UZATMA ${quarter - 4}`;
@@ -157,6 +181,10 @@ export default function OperatorPage() {
   }
 
   function startClock() {
+    if (!canStartClock) {
+      log("SİSTEM: süreyi sadece ev sahibi operatörü başlatabilir.");
+      return;
+    }
     if (mustSubPlayer) {
       log(`SİSTEM: ${mustSubPlayer} 5 faul nedeniyle oyundan çıkmalı. Önce değişiklik yap.`);
       return;
@@ -340,7 +368,7 @@ export default function OperatorPage() {
             : null),
         quarter: Number(payload.quarter ?? quarter ?? 1),
         game_clock: payload.game_clock || fmt(seconds) || "10:00",
-        operator_side: "HOME_OPERATOR",
+        operator_side: operatorSide === "HOME" ? "HOME_OPERATOR" : "AWAY_OPERATOR",
         sync_source: "OPERATOR_WEB",
         client_created_at: new Date().toISOString(),
         linked_basket_id: payload.linked_basket_id,
@@ -680,13 +708,116 @@ export default function OperatorPage() {
       (courtTab === "fouls" && m.kind === "foul"),
   );
 
+  function toggleRosterPlayer(player: string) {
+    setRosterChecked((prev) =>
+      prev.includes(player) ? prev.filter((p) => p !== player) : [...prev, player],
+    );
+    setStarterChecked((prev) => prev.filter((p) => p !== player || rosterChecked.includes(player)));
+  }
+
+  function toggleStarter(player: string) {
+    if (!rosterChecked.includes(player)) return;
+    setStarterChecked((prev) => {
+      if (prev.includes(player)) return prev.filter((p) => p !== player);
+      if (prev.length >= 5) return prev;
+      return [...prev, player];
+    });
+  }
+
+  function confirmStarters() {
+    if (starterChecked.length < 5) {
+      setForfeitWarning(`${controlledTeamName} ilk 5 çıkaramadı. Hükmen yenilgi riski var.`);
+      return;
+    }
+    setOnCourt(starterChecked.slice(0, 5));
+    setBench(rosterChecked.filter((p) => !starterChecked.includes(p)));
+    setSelectedPlayer(starterChecked[0]);
+    setFlowStep("GAME");
+    log(`SİSTEM: ${controlledTeamName} ilk 5 onaylandı. ${operatorSide === "HOME" ? "Süre başlatma yetkisi sende." : "Süreyi ev sahibi operatörü başlatacak."}`);
+  }
+
+  if (flowStep !== "GAME") {
+    const sidePlayers = operatorSide === "HOME" ? HOME_PLAYERS : AWAY_PLAYERS;
+    return (
+      <div className="operator-setup">
+        <div className="setup-card">
+          <h1>NONSTOP Operatör Akışı</h1>
+          <p>Salon seç → bugünkü maç → görev tarafı → kadro → ilk 5 → maç ekranı</p>
+
+          {flowStep === "VENUE" && (
+            <div className="setup-section">
+              <h2>1. Salon Seç</h2>
+              <select value={selectedVenue} onChange={(e) => setSelectedVenue(e.target.value)}>
+                {DEMO_VENUES.map((v) => <option key={v}>{v}</option>)}
+              </select>
+              <button className="primary" onClick={() => setFlowStep("MATCH")}>Bugünkü Maçları Getir</button>
+            </div>
+          )}
+
+          {flowStep === "MATCH" && (
+            <div className="setup-section">
+              <h2>2. Bugünkü Maç Sırası</h2>
+              {todaysVenueMatches.map((m, index) => (
+                <button key={m.id} className="match-card" onClick={() => { setActiveMatch(m); setFlowStep("ROSTER"); }}>
+                  <b>{index + 1}. Maç • {m.time}</b>
+                  <span>{m.home} - {m.away}</span>
+                  <small>{m.competition}</small>
+                </button>
+              ))}
+              <button onClick={() => setFlowStep("VENUE")}>Geri</button>
+            </div>
+          )}
+
+          {flowStep === "ROSTER" && activeMatch && (
+            <div className="setup-section">
+              <h2>3. Operatör Tarafı ve Kadro</h2>
+              <div className="side-grid">
+                <button className={operatorSide === "HOME" ? "active" : ""} onClick={() => { setOperatorSide("HOME"); setRosterChecked(HOME_PLAYERS.slice(0, 8)); setStarterChecked(HOME_PLAYERS.slice(0, 5)); }}>Ev Sahibi Operatörü<br/><small>Süreyi başlatabilir</small></button>
+                <button className={operatorSide === "AWAY" ? "active" : ""} onClick={() => { setOperatorSide("AWAY"); setRosterChecked(AWAY_PLAYERS.slice(0, 8)); setStarterChecked(AWAY_PLAYERS.slice(0, 5)); }}>Misafir Operatörü<br/><small>Süreyi başlatamaz</small></button>
+              </div>
+              <h3>{controlledTeamName} oyuncularını işaretle</h3>
+              <div className="check-grid">
+                {sidePlayers.map((p) => (
+                  <label key={p} className={rosterChecked.includes(p) ? "checked" : ""}>
+                    <input type="checkbox" checked={rosterChecked.includes(p)} onChange={() => toggleRosterPlayer(p)} /> {p}
+                  </label>
+                ))}
+              </div>
+              <button className="primary" onClick={() => {
+                if (rosterChecked.length < 5) { setForfeitWarning(`${controlledTeamName} 5 oyuncu bildirmedi. Hükmen yenilgi riski var.`); return; }
+                setForfeitWarning(""); setFlowStep("STARTERS");
+              }}>Kadro Tamam</button>
+              {forfeitWarning && <div className="warning-box">{forfeitWarning}</div>}
+            </div>
+          )}
+
+          {flowStep === "STARTERS" && (
+            <div className="setup-section">
+              <h2>4. İlk 5 Belirle</h2>
+              <p>Maça başlamak için tam 5 oyuncu seçilmeli. Şu an: <b>{starterChecked.length}/5</b></p>
+              <div className="check-grid starters">
+                {rosterChecked.map((p) => (
+                  <label key={p} className={starterChecked.includes(p) ? "checked" : ""}>
+                    <input type="checkbox" checked={starterChecked.includes(p)} onChange={() => toggleStarter(p)} /> {p}
+                  </label>
+                ))}
+              </div>
+              <button className="primary" onClick={confirmStarters}>Maç Ekranına Geç</button>
+              {forfeitWarning && <div className="warning-box">{forfeitWarning}</div>}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="operator-page">
       <header className="score-header">
         <div className="team-score">
           <div>
             <span>EV SAHİBİ</span>
-            <h1>FİNAL SPOR U14</h1>
+            <h1>{activeMatch?.home || "EV SAHİBİ"}</h1>
             <div className="team-fouls" title="Takım faulleri">
               <small>FAUL</small>
               <div className="foul-dots">{foulDots(homeTeamFouls)}</div>
@@ -729,7 +860,7 @@ export default function OperatorPage() {
         <div className="team-score away">
           <div>
             <span>MİSAFİR</span>
-            <h1>TOFAŞ U14</h1>
+            <h1>{activeMatch?.away || "MİSAFİR"}</h1>
             <div className="team-fouls" title="Takım faulleri">
               <small>FAUL</small>
               <div className="foul-dots">{foulDots(awayTeamFouls)}</div>
@@ -850,8 +981,8 @@ export default function OperatorPage() {
         <aside className="roster-panel">
           <div className="panel-title">
             <div>
-              <h2>FİNAL SPOR U14</h2>
-              <span>Sadece kontrol edilen takım</span>
+              <h2>{controlledTeamName}</h2>
+              <span>{operatorSide === "HOME" ? "Ev sahibi operatörü" : "Misafir operatörü"} / sadece kendi takımın</span>
             </div>
           </div>
           <div className="roster-block">

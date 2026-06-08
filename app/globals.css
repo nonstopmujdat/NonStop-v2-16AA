@@ -479,3 +479,17 @@ a{color:inherit;text-decoration:none}
   cursor:not-allowed!important;
 }
 .player-row.fouled-out b::after{content:'  🚫';}
+
+/* V2.1.22AC - operator venue/match/roster flow */
+.operator-setup{min-height:100vh;background:var(--bg);display:grid;place-items:center;padding:24px}
+.setup-card{width:min(980px,96vw);background:var(--panel);border:1px solid var(--line);border-radius:26px;padding:24px;box-shadow:0 24px 80px rgba(0,0,0,.25)}
+.setup-card h1{margin:0 0 6px;font-size:32px}.setup-card p{color:var(--muted)}
+.setup-section{margin-top:18px;background:#07111f;border:1px solid var(--line);border-radius:20px;padding:18px;display:grid;gap:12px}
+.setup-section select{background:#13243c;color:white;border:1px solid var(--line);border-radius:14px;padding:14px;font-weight:900}
+.setup-section button,.match-card{background:#13243c;color:white;border:1px solid var(--line);border-radius:14px;padding:13px 16px;font-weight:900;cursor:pointer;text-align:left}
+.setup-section button.primary,.setup-section .primary{background:var(--blue)!important;border-color:var(--blue)!important;text-align:center}
+.match-card{display:grid;gap:4px}.match-card span{font-size:18px}.match-card small{color:var(--muted)}
+.side-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.side-grid button{text-align:center}.side-grid button.active{border-color:var(--orange);box-shadow:0 0 0 2px rgba(255,159,28,.22)}
+.check-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.check-grid label{background:#13243c;border:1px solid var(--line);border-radius:13px;padding:11px;font-weight:900;cursor:pointer}.check-grid label.checked{border-color:var(--green);background:rgba(34,197,94,.12)}
+.warning-box{background:rgba(239,68,68,.12);border:1px solid var(--red);color:#fecaca;border-radius:14px;padding:12px;font-weight:900}
+@media(max-width:800px){.side-grid,.check-grid{grid-template-columns:1fr}.setup-card{padding:16px}.setup-card h1{font-size:24px}}

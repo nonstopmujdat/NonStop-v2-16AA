@@ -1,6 +1,6 @@
 {
-  "name": "nonstop-v2-1-22aa-competitions-clubs",
-  "version": "2.1.22-aa-competitions-clubs",
+  "name": "nonstop-v2-1-22ac-operator-match-flow",
+  "version": "2.1.22-ac-operator-match-flow",
   "private": true,
   "scripts": {
     "dev": "next dev",
