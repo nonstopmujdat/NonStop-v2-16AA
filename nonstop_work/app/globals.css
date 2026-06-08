@@ -1,0 +1,506 @@
+:root{
+  --bg:#07111f;
+  --panel:#101d31;
+  --panel2:#13243c;
+  --text:#f2f7ff;
+  --muted:#9fb2cc;
+  --blue:#2d8cff;
+  --green:#22c55e;
+  --red:#ef4444;
+  --orange:#ff9f1c;
+  --yellow:#facc15;
+  --line:#243955;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,Helvetica,sans-serif}
+button,select,input{font:inherit}
+a{color:inherit;text-decoration:none}
+
+.operator-page{min-height:100vh;display:grid;grid-template-rows:86px auto 1fr 150px;gap:8px;padding:8px;overflow:hidden}
+.score-header{display:grid;grid-template-columns:1fr 220px 1fr;gap:8px}
+.team-score,.clock-box,.panel,.footer{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:9px}
+.team-score{display:flex;align-items:center;justify-content:space-between}
+.team-score span,.clock-box span{color:var(--muted);font-weight:800;font-size:12px}
+.team-score h1{font-size:18px;margin:0}
+.team-score b{font-size:38px;color:var(--green)}
+.away b{color:#e5e7eb}
+.clock-box{text-align:center;display:flex;flex-direction:column;justify-content:center}
+.clock-box strong{font-size:54px;color:var(--orange);line-height:.95}
+.clock-buttons{display:flex;gap:6px;justify-content:center;margin:4px 0}
+.clock-buttons button{font-size:16px;padding:6px 13px}
+
+.operator-layout{min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 430px;gap:8px}
+.court-area{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:8px;display:grid;grid-template-rows:38px auto min-content;gap:6px;min-height:0;align-content:start}
+.court-toolbar{display:flex;gap:6px}
+.court-toolbar button,.stat-buttons button,.player-row button,.bench-grid button,.modal button,.clock-buttons button{background:#13243c;color:white;border:1px solid var(--line);border-radius:12px;font-weight:900;cursor:pointer;padding:8px 11px}
+.court-toolbar button.active{background:var(--blue)}
+.court{position:relative;border:4px solid #f2d29b;border-radius:16px;overflow:hidden;background:#b97937;width:62%;max-width:680px;aspect-ratio:94/50;min-height:210px;margin:0 auto;align-self:start}
+.marker{position:absolute;transform:translate(-50%,-50%);min-width:36px;height:28px;border-radius:16px;display:grid;place-items:center;font-weight:900;font-size:11px;color:white;border:2px solid white;z-index:5}.marker.foul{background:#ef4444!important}.heat-mode .marker{min-width:34px;height:34px;border-radius:50%;opacity:.45;filter:blur(.5px);font-size:0}
+.made{background:var(--green)}.miss{background:var(--red)}
+.event-feed{overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:8px;min-height:0}
+.event-feed h3{margin:0 0 8px}
+.event-feed ul{list-style:none;margin:0;padding:0}
+.event-feed li{background:#07111f;margin:5px 0;padding:7px;border-radius:9px;font-size:13px}
+
+.roster-panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:8px;display:grid;grid-template-rows:auto auto auto 70px;gap:6px;min-height:0;align-content:start}
+.panel-title{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:1px solid var(--line);padding-bottom:6px}
+.panel-title h2{margin:0}
+.panel-title span{color:var(--muted);font-size:12px}
+.roster-block{min-height:0;overflow:auto}
+.player-row{display:grid;grid-template-columns:1fr 76px;gap:6px;align-items:center;background:#07111f;border:1px solid var(--line);border-radius:12px;padding:7px;margin:5px 0;cursor:pointer}
+.player-row.selected{border-color:var(--orange);box-shadow:0 0 0 2px rgba(255,159,28,.16)}
+.player-row small{display:block;color:var(--muted)}
+.bench-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+.selected-player-card{background:#07111f;border:1px solid var(--line);border-radius:14px;padding:9px}
+.selected-player-card span,.selected-player-card small{display:block;color:var(--muted)}
+.selected-player-card strong{font-size:22px;display:block;margin:2px 0}
+
+.stat-footer{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:8px;display:grid;grid-template-columns:210px 1fr;gap:8px}
+.stat-context{background:#07111f;border:1px solid var(--line);border-radius:14px;padding:10px}
+.stat-context span{display:block;color:var(--muted);font-weight:800}
+.stat-context b{font-size:21px}
+.stat-buttons{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.stat-buttons button:nth-child(1),.stat-buttons button:nth-child(2),.stat-buttons button:nth-child(3){background:var(--blue)}
+
+.stat-buttons button:nth-child(7){background:#15803d}
+.stat-buttons button:nth-child(8){background:#6d28d9}
+.stat-buttons button:nth-child(9){background:#b45309}
+.stat-buttons button:nth-child(10){background:#991b1b}
+
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.72);display:grid;place-items:center;z-index:50}
+.modal{width:min(850px,92vw);background:var(--panel);border:1px solid var(--line);border-radius:24px;padding:24px}
+.modal.small{width:min(520px,92vw)}
+.decision-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.decision-card{background:#07111f;border:1px solid var(--line);border-radius:18px;padding:18px}
+.decision-card button{display:block;width:100%;margin:8px 0}
+.none{background:rgba(250,204,21,.2)!important;border-color:var(--yellow)!important}
+.primary{background:var(--blue)!important;border-color:var(--blue)!important}
+.modal-actions{margin-top:18px;display:flex;gap:10px}
+.dashboard{padding:22px}
+.grid{display:grid;gap:16px}.grid.four{grid-template-columns:repeat(4,1fr)}.grid.two{grid-template-columns:1fr 1fr}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px}
+.card span{display:block;color:var(--muted);font-weight:700}.card b{font-size:34px}
+.topbar{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:14px;margin-bottom:18px;display:flex;justify-content:space-between}
+@media(max-width:1000px){.operator-page{height:auto;display:block}.score-header,.operator-layout,.stat-footer,.decision-grid,.grid.four,.grid.two{grid-template-columns:1fr}.stat-buttons{grid-template-columns:repeat(3,1fr)}}
+
+.shot-pick-banner{background:#07111f;border:1px solid var(--orange);border-radius:14px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;gap:10px;color:var(--text)}
+.shot-pick-banner button{background:#13243c;color:white;border:1px solid var(--line);border-radius:12px;font-weight:900;cursor:pointer;padding:8px 12px}
+.court.picking-shot{cursor:crosshair;box-shadow:0 0 0 3px rgba(255,159,28,.35)}
+.court.picking-shot:after{content:'SAHADA YERİ TIKLA';position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:rgba(7,17,31,.82);border:1px solid rgba(255,255,255,.35);border-radius:16px;padding:14px 18px;font-weight:900;pointer-events:none}
+
+.half-line{position:absolute;left:50%;top:0;bottom:0;width:2px;background:rgba(255,255,255,.35);transform:translateX(-50%)}
+.center-circle{position:absolute;left:50%;top:50%;width:110px;height:110px;border:3px solid rgba(255,255,255,.35);border-radius:50%;transform:translate(-50%,-50%)}
+.paint{position:absolute;top:30%;width:16%;height:40%;border:3px solid rgba(255,255,255,.45)}
+.paint.left{left:0;border-left:0}.paint.right{right:0;border-right:0}
+.rim{position:absolute;top:50%;width:16px;height:16px;border:3px solid rgba(255,255,255,.75);border-radius:50%;transform:translateY(-50%)}
+.rim.left{left:7%}.rim.right{right:7%}
+.arc{position:absolute;top:50%;width:32%;height:78%;border:3px solid rgba(255,255,255,.45);border-radius:50%;transform:translateY(-50%)}
+.arc.left{left:-13%;border-left-color:transparent}.arc.right{right:-13%;border-right-color:transparent}
+.bottom-feed ul{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+.bottom-feed li{margin:0!important}
+.stat-context small{display:block;color:var(--muted);margin-top:5px}
+
+@media(max-width:1000px){.operator-page{grid-template-rows:auto}.court{width:100%;min-height:240px}.bottom-feed ul{grid-template-columns:1fr}.score-header,.operator-layout,.stat-footer{grid-template-columns:1fr}.stat-buttons{grid-template-columns:repeat(3,1fr)}}
+
+/* V2.1 compact operator layout */
+.roster-block.bench{max-height:124px}
+.roster-block h3{margin:4px 0 5px;font-size:14px}
+.court-toolbar button{font-size:13px}
+.stat-buttons button{min-height:40px;font-size:13px}
+.clock-box small{font-size:11px;color:var(--muted)}
+.clock-box>button{padding:4px 8px;border-radius:10px;font-size:12px}
+.panel-title h2{font-size:17px}
+
+/* V2.1.1 statistic panel / scoreboard separation fix */
+.operator-page{
+  grid-template-rows:72px 104px minmax(0,1fr) 112px;
+  gap:7px;
+}
+.score-header{
+  grid-template-columns:1fr 190px 1fr;
+  gap:7px;
+  position:relative;
+  z-index:2;
+}
+.team-score,.clock-box{padding:7px 9px;border-radius:14px}
+.team-score h1{font-size:15px}
+.team-score b{font-size:31px}
+.clock-box strong{font-size:44px;line-height:.9}
+.clock-buttons{margin:2px 0}
+.clock-buttons button{font-size:13px;padding:4px 10px}
+.stat-footer{
+  position:relative;
+  z-index:1;
+  grid-template-columns:170px 1fr;
+  gap:7px;
+  padding:7px;
+  min-height:0;
+  align-items:stretch;
+}
+.stat-context{padding:8px;border-radius:12px;overflow:hidden}
+.stat-context span{font-size:11px}
+.stat-context b{font-size:16px;line-height:1.05}
+.stat-context small{font-size:10px;line-height:1.15}
+.stat-buttons{
+  display:grid;
+  grid-template-columns:repeat(4, minmax(0, 1fr));
+  grid-template-rows:repeat(3, 1fr);
+  gap:5px;
+  height:100%;
+}
+.stat-buttons button{
+  min-height:28px;
+  padding:4px 5px;
+  font-size:10px;
+  line-height:1.05;
+  border-radius:10px;
+  white-space:normal;
+}
+.stat-buttons .shot-btn{
+  background:var(--blue)!important;
+  font-size:15px;
+  grid-column:span 1;
+}
+.stat-buttons .shot-btn:nth-child(1){grid-column:1 / 2}
+.stat-buttons .shot-btn:nth-child(2){grid-column:2 / 3}
+.stat-buttons .shot-btn:nth-child(3){grid-column:3 / 4}
+.operator-layout{
+  grid-template-columns:minmax(0,1fr) 460px;
+  min-height:0;
+}
+.court-area{
+  grid-template-rows:34px min-content auto;
+  padding:7px;
+}
+.court{
+  width:55%;
+  min-height:170px;
+  max-height:300px;
+}
+.roster-panel{
+  grid-template-rows:auto minmax(0,1.2fr) minmax(72px,.55fr) 58px;
+  padding:7px;
+  gap:5px;
+}
+.player-row{grid-template-columns:1fr 64px;padding:5px 6px;margin:4px 0;border-radius:10px;font-size:12px}
+.player-row button,.bench-grid button{font-size:11px;padding:5px 6px;border-radius:9px}
+.bench-grid{gap:5px}
+.selected-player-card{padding:7px;border-radius:12px}
+.selected-player-card strong{font-size:17px}
+.bottom-feed{padding:7px;max-height:112px}
+.bottom-feed h3{font-size:14px;margin-bottom:5px}
+.bottom-feed li{font-size:11px;padding:5px}
+@media(max-width:1000px){
+  .operator-page{display:block;overflow:auto}
+  .score-header,.stat-footer,.operator-layout{grid-template-columns:1fr}
+  .court{width:100%;min-height:220px}
+  .stat-buttons{grid-template-columns:repeat(4,1fr)}
+}
+
+/* V2.1.2 scoreboard width + stat panel isolation fix */
+.operator-page{
+  grid-template-rows:82px 118px minmax(0,1fr) 112px;
+  gap:8px;
+}
+.score-header{
+  grid-template-columns:minmax(120px,.5fr) minmax(330px,1.75fr) minmax(120px,.5fr);
+  align-items:stretch;
+  gap:8px;
+}
+.team-score{
+  min-width:0;
+  padding:6px 8px;
+}
+.team-score h1{
+  font-size:13px;
+  line-height:1.05;
+  word-break:break-word;
+}
+.team-score b{
+  font-size:28px;
+}
+.clock-box{
+  min-width:0;
+  padding:6px 10px;
+}
+.clock-box strong{
+  font-size:60px;
+  line-height:.88;
+}
+.clock-box span{
+  font-size:11px;
+}
+.clock-box small{
+  font-size:10px;
+}
+.clock-buttons button{
+  padding:3px 12px;
+}
+
+/* Statistic panel should only be as wide as the court/shot/foul area. The right side is reserved for players. */
+.stat-footer{
+  width:calc(100% - 468px);
+  max-width:calc(100% - 468px);
+  min-width:520px;
+  grid-template-columns:150px minmax(0,1fr);
+  align-self:start;
+  overflow:hidden;
+  z-index:1;
+}
+.stat-context b{font-size:15px}
+.stat-context small{font-size:9px}
+.stat-buttons{
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  grid-template-rows:repeat(3,32px);
+  height:auto;
+  align-content:start;
+}
+.stat-buttons button{
+  min-height:32px;
+  height:32px;
+  font-size:10px;
+  padding:3px 4px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+}
+.stat-buttons .shot-btn{font-size:14px}
+/* Row 1: +1 +2 +3 */
+.stat-buttons button:nth-child(1){grid-column:1;grid-row:1}
+.stat-buttons button:nth-child(2){grid-column:2;grid-row:1}
+.stat-buttons button:nth-child(3){grid-column:3;grid-row:1}
+/* Row 2: rebounds and turnovers */
+.stat-buttons button:nth-child(4){grid-column:1;grid-row:2}
+.stat-buttons button:nth-child(5){grid-column:2;grid-row:2}
+.stat-buttons button:nth-child(6){grid-column:3;grid-row:2}
+.stat-buttons button:nth-child(7){grid-column:4;grid-row:2;background:#15803d}
+/* Row 3: foul / block actions. Keep all visible. */
+.stat-buttons button:nth-child(8){grid-column:1;grid-row:3;background:#6d28d9}
+.stat-buttons button:nth-child(9){grid-column:2;grid-row:3;background:#b45309}
+.stat-buttons button:nth-child(10){grid-column:3;grid-row:3;background:#991b1b}
+.stat-buttons button:nth-child(11){grid-column:4;grid-row:3;background:#7f1d1d}
+
+.operator-layout{
+  grid-template-columns:minmax(0,1fr) 460px;
+  align-items:start;
+}
+/* Move player panel upward into the free space next to the stat panel. */
+.roster-panel{
+  margin-top:-126px;
+  min-height:calc(100% + 126px);
+  grid-template-rows:auto minmax(0,1.45fr) minmax(100px,.75fr) 58px;
+}
+.court-area{
+  margin-top:0;
+}
+.court{
+  width:52%;
+  min-height:160px;
+  max-height:280px;
+}
+
+@media(max-width:1000px){
+  .score-header{grid-template-columns:1fr}
+  .stat-footer{width:100%;max-width:none;min-width:0;grid-template-columns:1fr}
+  .stat-buttons{grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(3,36px)}
+  .stat-buttons button{height:36px;min-height:36px}
+  .roster-panel{margin-top:0;min-height:0}
+  .court{width:100%;min-height:220px}
+}
+
+/* V2.1.3 vertical alignment fix: keep sizes, lower court/stat block, make scoreboard 10% shorter */
+.operator-page{
+  grid-template-rows:74px 118px minmax(0,1fr) 112px;
+  gap:8px;
+}
+.score-header{
+  min-height:0;
+}
+.team-score,.clock-box{
+  padding-top:5px;
+  padding-bottom:5px;
+}
+.clock-box strong{
+  font-size:56px;
+  line-height:.82;
+}
+.clock-buttons{
+  margin:1px 0;
+}
+.clock-box>button{
+  padding:3px 8px;
+}
+/* Move only the left work column downward so its bottom lines up better with the player column. */
+.stat-footer{
+  margin-top:16px;
+}
+.court-area{
+  margin-top:16px;
+}
+/* Keep the roster/player column up; no negative overlap needed. */
+.roster-panel{
+  margin-top:0;
+  min-height:100%;
+}
+@media(max-width:1000px){
+  .stat-footer,.court-area{margin-top:0}
+}
+
+/* V2.1.4 FORCE vertical shift: no size changes except scoreboard height. */
+.operator-page{
+  grid-template-rows:74px 118px minmax(0,1fr) 112px !important;
+}
+.score-header{
+  height:74px !important;
+  max-height:74px !important;
+  overflow:hidden !important;
+}
+.team-score,.clock-box{
+  padding-top:4px !important;
+  padding-bottom:4px !important;
+}
+.clock-box strong{
+  font-size:56px !important;
+  line-height:.80 !important;
+}
+/* Same sizes, stronger downward move for BOTH left-side work blocks. */
+.stat-footer{
+  margin-top:48px !important;
+}
+.court-area{
+  margin-top:48px !important;
+}
+/* Player column remains fixed; do not resize field/stat blocks. */
+.roster-panel{
+  margin-top:0 !important;
+}
+@media(max-width:1000px){
+  .stat-footer,.court-area{margin-top:0 !important}
+  .score-header{height:auto !important;max-height:none !important}
+}
+
+/* V2.1.5 exact vertical shift: keep sizes, move ONLY court + stats downward */
+.stat-footer{
+  margin-top:0 !important;
+  transform:translateY(70px) !important;
+}
+.court-area{
+  margin-top:0 !important;
+  transform:translateY(70px) !important;
+}
+.roster-panel{
+  margin-top:0 !important;
+  transform:none !important;
+}
+@media(max-width:1000px){
+  .stat-footer,.court-area{transform:none !important;}
+}
+
+/* V2.1.7 scoreboard height +30 only */
+.score-header{
+  height:96px !important;
+  max-height:96px !important;
+  min-height:96px !important;
+  overflow:visible !important;
+}
+.operator-page{
+  grid-template-rows:96px 118px minmax(0,1fr) 112px !important;
+}
+.team-score,.clock-box{
+  min-height:96px !important;
+}
+@media(max-width:1000px){
+  .score-header{height:auto !important;max-height:none !important;min-height:0 !important}
+  .team-score,.clock-box{min-height:0 !important}
+}
+
+/* V2.1.20 live score + player stats panel */
+.live-dashboard{min-height:100vh}
+.live-score-card{display:grid;grid-template-columns:1fr 260px 1fr;gap:14px;margin-bottom:18px}
+.live-team,.live-clock{background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:20px;text-align:center}
+.live-team span,.live-clock span{display:block;color:var(--muted);font-weight:900;font-size:12px;letter-spacing:.05em}
+.live-team h1{font-size:25px;margin:8px 0 10px}.live-team b{font-size:70px;color:var(--green)}.live-team.away b{color:#e5e7eb}
+.live-clock strong{display:block;color:var(--orange);font-size:54px;margin:8px 0}.live-clock small{color:var(--muted)}
+.stats-table-wrap{overflow:auto}.stats-table{width:100%;border-collapse:collapse;min-width:820px}.stats-table th,.stats-table td{padding:10px;border-bottom:1px solid var(--line);text-align:center}.stats-table th:first-child,.stats-table td:first-child{text-align:left}.stats-table th{color:var(--muted);font-size:12px;text-transform:uppercase}.stats-table tr:hover td{background:#0b1626}
+@media(max-width:900px){.live-score-card{grid-template-columns:1fr}.live-team b{font-size:52px}.live-clock strong{font-size:42px}}
+
+/* V2.1.21B scoreboard visual + team foul dots */
+.score-header{
+  grid-template-columns:minmax(190px,.82fr) minmax(270px,1.28fr) minmax(190px,.82fr) !important;
+  height:108px !important;
+  max-height:108px !important;
+  min-height:108px !important;
+}
+.operator-page{
+  grid-template-rows:108px 118px minmax(0,1fr) 112px !important;
+}
+.team-score,.clock-box{
+  min-height:108px !important;
+}
+.clock-box{
+  transform:translateY(10px);
+  max-width:360px;
+  margin:0 auto;
+  width:100%;
+}
+.clock-box strong{
+  font-size:64px !important;
+  line-height:.85 !important;
+}
+.team-score{
+  padding:9px 13px !important;
+}
+.team-score h1{
+  font-size:17px !important;
+}
+.team-score b{
+  font-size:42px !important;
+}
+.team-fouls{margin-top:6px;display:flex;align-items:center;gap:8px}
+.team-fouls small{font-size:10px!important;color:var(--muted);font-weight:900;letter-spacing:.06em}
+.foul-dots{display:flex;gap:5px}
+.foul-dots span{width:13px;height:13px;border-radius:50%;border:1px solid #425a7a;background:#07111f;box-shadow:inset 0 0 0 1px rgba(255,255,255,.04)}
+.foul-dots span.active{background:var(--red);border-color:#fecaca;box-shadow:0 0 10px rgba(239,68,68,.7)}
+@media(max-width:1000px){
+  .score-header{height:auto!important;max-height:none!important;min-height:0!important;grid-template-columns:1fr!important}
+  .operator-page{grid-template-rows:auto!important}
+  .clock-box{transform:none;max-width:none}
+  .team-score,.clock-box{min-height:0!important}
+}
+
+/* V2.1.21C - 5 foul fouled-out safety */
+.player-row.fouled-out,
+.fouled-out-btn:disabled{
+  opacity:.48;
+  filter:grayscale(.7);
+  border-color:#7f1d1d!important;
+  background:#1f1111!important;
+  cursor:not-allowed!important;
+}
+.player-row.fouled-out b::after{content:'  🚫';}
+
+/* V2.1.22AC - operator venue/match/roster flow */
+.operator-setup{min-height:100vh;background:var(--bg);display:grid;place-items:center;padding:24px}
+.setup-card{width:min(980px,96vw);background:var(--panel);border:1px solid var(--line);border-radius:26px;padding:24px;box-shadow:0 24px 80px rgba(0,0,0,.25)}
+.setup-card h1{margin:0 0 6px;font-size:32px}.setup-card p{color:var(--muted)}
+.setup-section{margin-top:18px;background:#07111f;border:1px solid var(--line);border-radius:20px;padding:18px;display:grid;gap:12px}
+.setup-section select{background:#13243c;color:white;border:1px solid var(--line);border-radius:14px;padding:14px;font-weight:900}
+.setup-section button,.match-card{background:#13243c;color:white;border:1px solid var(--line);border-radius:14px;padding:13px 16px;font-weight:900;cursor:pointer;text-align:left}
+.setup-section button.primary,.setup-section .primary{background:var(--blue)!important;border-color:var(--blue)!important;text-align:center}
+.match-card{display:grid;gap:4px}.match-card span{font-size:18px}.match-card small{color:var(--muted)}
+.side-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.side-grid button{text-align:center}.side-grid button.active{border-color:var(--orange);box-shadow:0 0 0 2px rgba(255,159,28,.22)}
+.check-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.check-grid label{background:#13243c;border:1px solid var(--line);border-radius:13px;padding:11px;font-weight:900;cursor:pointer}.check-grid label.checked{border-color:var(--green);background:rgba(34,197,94,.12)}
+.warning-box{background:rgba(239,68,68,.12);border:1px solid var(--red);color:#fecaca;border-radius:14px;padding:12px;font-weight:900}
+@media(max-width:800px){.side-grid,.check-grid{grid-template-columns:1fr}.setup-card{padding:16px}.setup-card h1{font-size:24px}}
+
+/* V2.1.22AD Special/Friendly Match Mode */
+.special-match-box,.info-box{background:#07111f;border:1px solid var(--orange);border-radius:18px;padding:14px;margin:14px 0;display:grid;gap:10px}
+.special-match-box h3{margin:0;color:var(--yellow)}
+.special-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.special-grid label{display:grid;gap:5px;color:var(--muted);font-weight:800;font-size:13px}
+.special-grid input{background:#0b1728;color:white;border:1px solid var(--line);border-radius:12px;padding:10px}
+.checkbox-line{grid-column:1/-1;display:flex!important;align-items:center;gap:8px;color:var(--text)!important}
+.checkbox-line input{width:auto}
+.info-box{border-color:var(--blue);color:var(--text);line-height:1.4}
+@media(max-width:800px){.special-grid{grid-template-columns:1fr}}

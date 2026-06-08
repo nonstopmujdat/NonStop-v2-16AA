@@ -1,0 +1,27 @@
+{
+  "name": "nonstop-v2-1-22af-3-mini-admin-ui-completion",
+  "version": "2.1.22-af-3",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "next": "14.2.5",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "@supabase/supabase-js": "^2.45.0",
+    "uuid": "^10.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.4",
+    "@types/node": "^20.14.11",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0"
+  },
+  "engines": {
+    "node": "22.x"
+  },
+  "packageManager": "yarn@1.22.22"
+}
