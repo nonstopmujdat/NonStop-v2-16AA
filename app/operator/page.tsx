@@ -30,21 +30,43 @@ type CourtMarker = {
 
 type CourtTab = "court" | "shots" | "fouls" | "heat";
 type OperatorSide = "HOME" | "AWAY";
-type FlowStep = "VENUE" | "MATCH" | "ROSTER" | "STARTERS" | "GAME";
+type FlowStep = "CITY" | "VENUE" | "MATCH" | "ROSTER" | "STARTERS" | "GAME";
 
-type DemoMatch = { id:number; time:string; venue:string; home:string; away:string; category:string; competition:string };
-const DEMO_VENUES = ["Nilüfer Spor Salonu", "Tofaş Spor Salonu", "Atatürk Spor Salonu"];
-const DEMO_TODAY_MATCHES: DemoMatch[] = [
-  { id: 1, time: "10:00", venue: "Nilüfer Spor Salonu", home: "FİNAL SPOR U14", away: "TOFAŞ U14", category: "U14", competition: "Bursa U14 A Ligi" },
-  { id: 2, time: "12:00", venue: "Nilüfer Spor Salonu", home: "GEMLİK U14", away: "BURSA BASKET U14", category: "U14", competition: "Bursa U14 A Ligi" },
-  { id: 3, time: "14:00", venue: "Tofaş Spor Salonu", home: "TOFAŞ U16", away: "FİNAL SPOR U16", category: "U16", competition: "Bursa U16 A Ligi" },
+type DemoVenue = { id: number; city: string; name: string };
+type DemoMatch = { id:number; time:string; city:string; venue:string; home:string; away:string; category:string; competition:string };
+const DEMO_CITIES = ["Bursa", "İstanbul", "İzmir", "Ankara", "Kocaeli"];
+const DEMO_VENUES: DemoVenue[] = [
+  { id: 1, city: "Bursa", name: "Nilüfer Spor Salonu" },
+  { id: 2, city: "Bursa", name: "Tofaş Spor Salonu" },
+  { id: 3, city: "Bursa", name: "Atatürk Spor Salonu" },
+  { id: 4, city: "İstanbul", name: "Sinan Erdem Yan Salon" },
+  { id: 5, city: "İzmir", name: "Halkapınar Spor Salonu" },
+  { id: 6, city: "Ankara", name: "MEB Spor Salonu" },
+  { id: 7, city: "Kocaeli", name: "Şehit Polis Recep Topaloğlu" },
 ];
-const HOME_PLAYERS = ["#4 Ahmet", "#5 Mehmet", "#6 Ali", "#7 Burak", "#8 Kerem", "#9 Ege", "#10 Okan", "#11 Mert", "#12 Can", "#13 Tuna", "#14 Emir", "#15 Arda"];
-const AWAY_PLAYERS = ["#4 Rakip Ali", "#5 Rakip Efe", "#6 Rakip Mert", "#7 Rakip Can", "#8 Rakip Deniz", "#9 Rakip Kaan", "#10 Rakip Aras", "#11 Rakip Bora", "#12 Rakip Eren", "#13 Rakip Yiğit", "#14 Rakip Alp", "#15 Rakip Ozan"];
+const DEMO_TODAY_MATCHES: DemoMatch[] = [
+  { id: 1, time: "10:00", city: "Bursa", venue: "Nilüfer Spor Salonu", home: "FİNAL SPOR U14", away: "TOFAŞ U14", category: "U14", competition: "Bursa U14 A Ligi" },
+  { id: 2, time: "12:00", city: "Bursa", venue: "Nilüfer Spor Salonu", home: "GEMLİK U14", away: "BURSA BASKET U14", category: "U14", competition: "Bursa U14 A Ligi" },
+  { id: 3, time: "14:00", city: "Bursa", venue: "Tofaş Spor Salonu", home: "TOFAŞ U16", away: "FİNAL SPOR U16", category: "U16", competition: "Bursa U16 A Ligi" },
+  { id: 4, time: "11:00", city: "İstanbul", venue: "Sinan Erdem Yan Salon", home: "İSTANBUL YILDIZLAR U14", away: "BASKET AKADEMİ U14", category: "U14", competition: "İstanbul U14 A Ligi" },
+];
+const HOME_PLAYERS = Array.from({ length: 26 }, (_, i) => {
+  const jersey = i + 4;
+  const names = ["Ahmet", "Mehmet", "Ali", "Burak", "Kerem", "Ege", "Okan", "Mert", "Can", "Tuna", "Emir", "Arda", "Kaan", "Deniz", "Efe", "Bora", "Yiğit", "Alp", "Umut", "Baran", "Doruk", "Rüzgar", "Toprak", "Berk", "Eren", "Sarp"];
+  return `#${jersey} ${names[i]}`;
+});
+const AWAY_PLAYERS = Array.from({ length: 30 }, (_, i) => {
+  const jersey = i + 4;
+  const names = ["Ali", "Efe", "Mert", "Can", "Deniz", "Kaan", "Aras", "Bora", "Eren", "Yiğit", "Alp", "Ozan", "Emirhan", "Taha", "Miraç", "Kutay", "Atlas", "Arda", "Çağan", "Koray", "Rıza", "Salih", "Onur", "Talha", "Yaman", "Poyraz", "Mete", "Eymen", "Akın", "Bartu"];
+  return `#${jersey} ${names[i]}`;
+});
+const MAX_MATCH_ROSTER = 12;
 
 export default function OperatorPage() {
-  const [flowStep, setFlowStep] = useState<FlowStep>("VENUE");
-  const [selectedVenue, setSelectedVenue] = useState(DEMO_VENUES[0]);
+  const [flowStep, setFlowStep] = useState<FlowStep>("CITY");
+  const [selectedCity, setSelectedCity] = useState(DEMO_CITIES[0]);
+  const cityVenues = DEMO_VENUES.filter((v) => v.city === selectedCity);
+  const [selectedVenue, setSelectedVenue] = useState(DEMO_VENUES[0].name);
   const [activeMatch, setActiveMatch] = useState<DemoMatch | null>(null);
   const [operatorSide, setOperatorSide] = useState<OperatorSide>("HOME");
   const [rosterChecked, setRosterChecked] = useState<string[]>(HOME_PLAYERS.slice(0, 8));
@@ -91,9 +113,9 @@ export default function OperatorPage() {
   const clickPoints = useRef<1 | 2 | 3 | null>(null);
   const [markers, setMarkers] = useState<CourtMarker[]>([]);
 
-  const todaysVenueMatches = DEMO_TODAY_MATCHES.filter((m) => m.venue === selectedVenue);
+  const todaysVenueMatches = DEMO_TODAY_MATCHES.filter((m) => m.city === selectedCity && m.venue === selectedVenue);
   const controlledTeamName = activeMatch ? (operatorSide === "HOME" ? activeMatch.home : activeMatch.away) : "TAKIM";
-  const opponentTeamName = activeMatch ? (operatorSide === "HOME" ? activeMatch.away : activeMatch.home) : "RAKİP";
+  const opponentTeamName = activeMatch ? (operatorSide === "HOME" ? activeMatch.away : activeMatch.home) : "DİĞER TAKIM";
   const canStartClock = operatorSide === "HOME";
 
   const periodLabel =
@@ -709,10 +731,18 @@ export default function OperatorPage() {
   );
 
   function toggleRosterPlayer(player: string) {
-    setRosterChecked((prev) =>
-      prev.includes(player) ? prev.filter((p) => p !== player) : [...prev, player],
-    );
-    setStarterChecked((prev) => prev.filter((p) => p !== player || rosterChecked.includes(player)));
+    setRosterChecked((prev) => {
+      if (prev.includes(player)) {
+        setStarterChecked((starters) => starters.filter((p) => p !== player));
+        return prev.filter((p) => p !== player);
+      }
+      if (prev.length >= MAX_MATCH_ROSTER) {
+        setForfeitWarning(`Maç kadrosu en fazla ${MAX_MATCH_ROSTER} oyuncu olabilir.`);
+        return prev;
+      }
+      setForfeitWarning("");
+      return [...prev, player];
+    });
   }
 
   function toggleStarter(player: string) {
@@ -742,21 +772,39 @@ export default function OperatorPage() {
       <div className="operator-setup">
         <div className="setup-card">
           <h1>NONSTOP Operatör Akışı</h1>
-          <p>Salon seç → bugünkü maç → görev tarafı → kadro → ilk 5 → maç ekranı</p>
+          <p>İl seç → salon seç → bugünkü maç → görev tarafı → maç kadrosu → ilk 5 → maç ekranı</p>
+
+          {flowStep === "CITY" && (
+            <div className="setup-section">
+              <h2>1. İl Seç</h2>
+              <p>Önce il seçilir. Böylece yüzlerce salon içinde karışıklık olmaz.</p>
+              <select value={selectedCity} onChange={(e) => {
+                const nextCity = e.target.value;
+                setSelectedCity(nextCity);
+                const firstVenue = DEMO_VENUES.find((v) => v.city === nextCity)?.name || "";
+                setSelectedVenue(firstVenue);
+              }}>
+                {DEMO_CITIES.map((c) => <option key={c}>{c}</option>)}
+              </select>
+              <button className="primary" onClick={() => setFlowStep("VENUE")}>Salon Seçimine Geç</button>
+            </div>
+          )}
 
           {flowStep === "VENUE" && (
             <div className="setup-section">
-              <h2>1. Salon Seç</h2>
+              <h2>2. Salon Seç</h2>
+              <p>Seçili il: <b>{selectedCity}</b></p>
               <select value={selectedVenue} onChange={(e) => setSelectedVenue(e.target.value)}>
-                {DEMO_VENUES.map((v) => <option key={v}>{v}</option>)}
+                {cityVenues.map((v) => <option key={v.id}>{v.name}</option>)}
               </select>
               <button className="primary" onClick={() => setFlowStep("MATCH")}>Bugünkü Maçları Getir</button>
+              <button onClick={() => setFlowStep("CITY")}>İl Seçimine Geri Dön</button>
             </div>
           )}
 
           {flowStep === "MATCH" && (
             <div className="setup-section">
-              <h2>2. Bugünkü Maç Sırası</h2>
+              <h2>3. Bugünkü Maç Sırası</h2>
               {todaysVenueMatches.map((m, index) => (
                 <button key={m.id} className="match-card" onClick={() => { setActiveMatch(m); setFlowStep("ROSTER"); }}>
                   <b>{index + 1}. Maç • {m.time}</b>
@@ -764,18 +812,19 @@ export default function OperatorPage() {
                   <small>{m.competition}</small>
                 </button>
               ))}
-              <button onClick={() => setFlowStep("VENUE")}>Geri</button>
+              <button onClick={() => setFlowStep("VENUE")}>Salon Seçimine Geri Dön</button>
             </div>
           )}
 
           {flowStep === "ROSTER" && activeMatch && (
             <div className="setup-section">
-              <h2>3. Operatör Tarafı ve Kadro</h2>
+              <h2>4. Operatör Tarafı ve Maç Kadrosu</h2>
               <div className="side-grid">
                 <button className={operatorSide === "HOME" ? "active" : ""} onClick={() => { setOperatorSide("HOME"); setRosterChecked(HOME_PLAYERS.slice(0, 8)); setStarterChecked(HOME_PLAYERS.slice(0, 5)); }}>Ev Sahibi Operatörü<br/><small>Süreyi başlatabilir</small></button>
                 <button className={operatorSide === "AWAY" ? "active" : ""} onClick={() => { setOperatorSide("AWAY"); setRosterChecked(AWAY_PLAYERS.slice(0, 8)); setStarterChecked(AWAY_PLAYERS.slice(0, 5)); }}>Misafir Operatörü<br/><small>Süreyi başlatamaz</small></button>
               </div>
-              <h3>{controlledTeamName} oyuncularını işaretle</h3>
+              <h3>{controlledTeamName} takım listesinden maç kadrosunu seç</h3>
+              <p>Takım listesinde <b>{sidePlayers.length}</b> oyuncu olabilir. Maç kadrosu ise <b>{rosterChecked.length}/{MAX_MATCH_ROSTER}</b>. En az 5, en fazla 12 oyuncu seçilebilir.</p>
               <div className="check-grid">
                 {sidePlayers.map((p) => (
                   <label key={p} className={rosterChecked.includes(p) ? "checked" : ""}>
@@ -785,6 +834,7 @@ export default function OperatorPage() {
               </div>
               <button className="primary" onClick={() => {
                 if (rosterChecked.length < 5) { setForfeitWarning(`${controlledTeamName} 5 oyuncu bildirmedi. Hükmen yenilgi riski var.`); return; }
+                if (rosterChecked.length > MAX_MATCH_ROSTER) { setForfeitWarning(`Maç kadrosu en fazla ${MAX_MATCH_ROSTER} oyuncu olabilir.`); return; }
                 setForfeitWarning(""); setFlowStep("STARTERS");
               }}>Kadro Tamam</button>
               {forfeitWarning && <div className="warning-box">{forfeitWarning}</div>}
@@ -793,8 +843,8 @@ export default function OperatorPage() {
 
           {flowStep === "STARTERS" && (
             <div className="setup-section">
-              <h2>4. İlk 5 Belirle</h2>
-              <p>Maça başlamak için tam 5 oyuncu seçilmeli. Şu an: <b>{starterChecked.length}/5</b></p>
+              <h2>5. İlk 5 Belirle</h2>
+              <p>Seçilen 12 kişilik maç kadrosundan sahaya çıkacak tam 5 oyuncu seçilmeli. Şu an: <b>{starterChecked.length}/5</b></p>
               <div className="check-grid starters">
                 {rosterChecked.map((p) => (
                   <label key={p} className={starterChecked.includes(p) ? "checked" : ""}>
@@ -1079,11 +1129,11 @@ export default function OperatorPage() {
               </div>
               <div className="decision-card">
                 <h3>Faul?</h3>
-                <button onClick={() => setFoul("#12 Rakip")}>
-                  #12 Rakip PF
+                <button onClick={() => setFoul(`${opponentTeamName} #12`)}>
+                  {opponentTeamName} #12 PF
                 </button>
-                <button onClick={() => setFoul("#15 Rakip")}>
-                  #15 Rakip PF
+                <button onClick={() => setFoul(`${opponentTeamName} #15`)}>
+                  {opponentTeamName} #15 PF
                 </button>
                 <button className="none" onClick={() => setFoul(null)}>
                   YOK
