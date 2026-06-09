@@ -16,20 +16,15 @@ type BasicRow = {
   events: number;
 };
 
-type MinuteRow = {
-  match_id: number;
-  team_id: number | null;
-  player_id: number | null;
-  minutes_played: number | null;
-  minutes_display: string | null;
-};
-
 type AdvancedRow = {
   match_id: number;
   team_id: number | null;
   team_name: string | null;
   player_id: number | null;
   player_name: string | null;
+  minutes_display?: string | null;
+  minutes_played?: number | null;
+  plus_minus?: number | null;
   two_pm: number;
   two_pa: number;
   three_pm: number;
@@ -57,9 +52,17 @@ type AdvancedRow = {
   mvp_score: number;
 };
 
+type PlusMinusRow = {
+  match_id: number;
+  team_id: number | null;
+  player_id: number | null;
+  minutes_display: string | null;
+  minutes_played: number | null;
+  plus_minus: number | null;
+};
+
 function groupEvents(events: any[]): BasicRow[] {
   const map = new Map<string, BasicRow>();
-
   for (const e of events) {
     const key = `${e.team_id || '-'}:${e.player_id || '-'}`;
     const row = map.get(key) || {
@@ -74,23 +77,17 @@ function groupEvents(events: any[]): BasicRow[] {
       fouls: 0,
       events: 0,
     };
-
     const type = String(e.event_type || '').toUpperCase();
     row.events += 1;
-
-    if (type.includes('POINT') || type.includes('BASKET') || type.includes('SCORE')) {
-      row.points += Number(e.points || 0) || 0;
-    }
+    if (type.includes('POINT') || type.includes('BASKET') || type.includes('SCORE')) row.points += Number(e.points || 0) || 0;
     if (type.includes('REBOUND') || type.includes('RIBAUND') || type === 'OREB' || type === 'DREB') row.rebounds += 1;
     if (type.includes('ASSIST') || type.includes('ASIST') || type === 'AST') row.assists += 1;
     if (type.includes('STEAL') || type.includes('TOP_CALMA') || type === 'STL') row.steals += 1;
     if (type.includes('BLOCK') || type.includes('BLOK') || type === 'BLK') row.blocks += 1;
     if (type.includes('TURNOVER') || type.includes('TOP_KAYBI') || type === 'TOV') row.turnovers += 1;
     if (type.includes('FOUL') || type.includes('FAUL') || type === 'PF') row.fouls += 1;
-
     map.set(key, row);
   }
-
   return Array.from(map.values());
 }
 
@@ -101,33 +98,54 @@ function numberCell(value: any, suffix = '') {
   return `${n}${suffix}`;
 }
 
+function plusMinusCell(value: any) {
+  if (value === null || value === undefined || value === '') return '-';
+  const n = Number(value);
+  if (Number.isNaN(n)) return String(value);
+  return n > 0 ? `+${n}` : `${n}`;
+}
+
+function mergeAdvancedWithPlusMinus(advancedRows: AdvancedRow[], pmRows: PlusMinusRow[]): AdvancedRow[] {
+  const pmMap = new Map<string, PlusMinusRow>();
+  for (const row of pmRows) {
+    pmMap.set(`${row.match_id}:${row.team_id}:${row.player_id}`, row);
+  }
+
+  return advancedRows.map((row) => {
+    const pm = pmMap.get(`${row.match_id}:${row.team_id}:${row.player_id}`);
+    return {
+      ...row,
+      minutes_display: pm?.minutes_display ?? row.minutes_display ?? null,
+      minutes_played: pm?.minutes_played ?? row.minutes_played ?? null,
+      plus_minus: pm?.plus_minus ?? row.plus_minus ?? null,
+    };
+  });
+}
+
 export default async function MatchStatsPdfPage({ params }: { params: { matchId: string } }) {
   const matchId = Number(params.matchId);
   let match: any = null;
   let events: any[] = [];
   let rows: BasicRow[] = [];
   let advancedRows: AdvancedRow[] = [];
-  let minuteMap = new Map<string, MinuteRow>();
   let advancedError = '';
-  let minutesError = '';
+  let plusMinusError = '';
 
   if (hasSupabaseAdminConfig()) {
     const supabase = getSupabaseAdmin();
-    const [matchRes, eventRes, advancedRes, minutesRes] = await Promise.all([
+    const [matchRes, eventRes, advancedRes, plusMinusRes] = await Promise.all([
       supabase.from('operator_match_queue').select('*').eq('match_id', matchId).maybeSingle(),
       supabase.from('match_events').select('*').eq('match_id', matchId).order('id'),
       supabase.from('live_player_advanced_stats').select('*').eq('match_id', matchId).order('team_id').order('player_id'),
-      supabase.from('live_player_minutes').select('*').eq('match_id', matchId),
+      supabase.from('live_player_plus_minus').select('*').eq('match_id', matchId).order('team_id').order('player_id'),
     ]);
 
     match = matchRes.data;
     events = eventRes.data || [];
     rows = groupEvents(events);
-    advancedRows = (advancedRes.data || []) as AdvancedRow[];
-    const minuteRows = (minutesRes.data || []) as MinuteRow[];
-    minuteMap = new Map(minuteRows.map((r) => [`${r.team_id ?? '-'}:${r.player_id ?? '-'}`, r]));
     advancedError = advancedRes.error?.message || '';
-    minutesError = minutesRes.error?.message || '';
+    plusMinusError = plusMinusRes.error?.message || '';
+    advancedRows = mergeAdvancedWithPlusMinus((advancedRes.data || []) as AdvancedRow[], (plusMinusRes.data || []) as PlusMinusRow[]);
   }
 
   return (
@@ -143,10 +161,9 @@ export default async function MatchStatsPdfPage({ params }: { params: { matchId:
       <section className="card">
         <h1>NONSTOP Maç İstatistik Raporu</h1>
         <p><b>Maç ID:</b> {matchId}</p>
-        <p><b>Organizasyon:</b> {match?.competition_name || '-'}</p>
+        <p><b>Maç:</b> {match?.home_team_name || '-'} - {match?.away_team_name || '-'}</p>
+        <p><b>Tarih/Saat:</b> {match?.match_date || '-'} {match?.match_time || ''}</p>
         <p><b>Salon:</b> {match?.venue_name || '-'}</p>
-        <p><b>Ev Sahibi:</b> {match?.home_team_name || '-'}</p>
-        <p><b>Misafir:</b> {match?.away_team_name || '-'}</p>
         <p><b>Skor:</b> {match?.home_score ?? 0} - {match?.away_score ?? 0}</p>
         <p className="no-print"><button type="button" id="printButton">PDF Yazdır</button></p>
       </section>
@@ -154,19 +171,21 @@ export default async function MatchStatsPdfPage({ params }: { params: { matchId:
       <section className="card" style={{ marginTop: 18, overflowX: 'auto' }}>
         <h2>Gelişmiş Oyuncu İstatistikleri</h2>
         <p style={{ marginTop: 0 }}>
-          VP = ham performans, Perf40 = süreye göre verim, MVP = maçın en değerli oyuncusu puanı.
+          VP = ham performans, Perf40 = süreye göre verim, MVP = maçın en değerli oyuncusu puanı, +/- = oyuncu sahadayken skor farkı.
         </p>
-
         {advancedError ? (
           <p><b>Uyarı:</b> live_player_advanced_stats görünümü okunamadı. Hata: {advancedError}</p>
         ) : null}
-
+        {plusMinusError ? (
+          <p><b>Uyarı:</b> live_player_plus_minus görünümü okunamadı. Hata: {plusMinusError}</p>
+        ) : null}
         <table>
           <thead>
             <tr>
               <th>Takım</th>
               <th>Oyuncu</th>
               <th>MIN</th>
+              <th>+/-</th>
               <th>2PM</th>
               <th>2PA</th>
               <th>3PM</th>
@@ -197,7 +216,8 @@ export default async function MatchStatsPdfPage({ params }: { params: { matchId:
               <tr key={`${r.match_id}-${r.team_id}-${r.player_id}-${i}`}>
                 <td>{r.team_name || r.team_id || '-'}</td>
                 <td>{r.player_name || r.player_id || '-'}</td>
-                <td><b>{minuteMap.get(`${r.team_id ?? '-'}:${r.player_id ?? '-'}`)?.minutes_display || '-'}</b></td>
+                <td><b>{r.minutes_display || '-'}</b></td>
+                <td><b>{plusMinusCell(r.plus_minus)}</b></td>
                 <td>{numberCell(r.two_pm)}</td>
                 <td>{numberCell(r.two_pa)}</td>
                 <td>{numberCell(r.three_pm)}</td>
@@ -223,7 +243,7 @@ export default async function MatchStatsPdfPage({ params }: { params: { matchId:
                 <td><b>{numberCell(r.mvp_score)}</b></td>
               </tr>
             )) : (
-              <tr><td colSpan={26}>Bu maç için gelişmiş istatistik verisi bulunamadı.</td></tr>
+              <tr><td colSpan={27}>Bu maç için gelişmiş istatistik verisi bulunamadı.</td></tr>
             )}
           </tbody>
         </table>
@@ -247,7 +267,7 @@ export default async function MatchStatsPdfPage({ params }: { params: { matchId:
             </tr>
           </thead>
           <tbody>
-            {rows.length ? rows.map((r, i) => (
+            {rows.map((r, i) => (
               <tr key={i}>
                 <td>{r.team_id || '-'}</td>
                 <td>{r.player_id || '-'}</td>
@@ -260,9 +280,7 @@ export default async function MatchStatsPdfPage({ params }: { params: { matchId:
                 <td>{r.fouls}</td>
                 <td>{r.events}</td>
               </tr>
-            )) : (
-              <tr><td colSpan={10}>Bu maç için olay kaydı bulunamadı.</td></tr>
-            )}
+            ))}
           </tbody>
         </table>
       </section>
@@ -274,7 +292,7 @@ export default async function MatchStatsPdfPage({ params }: { params: { matchId:
             <tr><th>ID</th><th>Periyot</th><th>Saat</th><th>Takım</th><th>Oyuncu</th><th>Olay</th></tr>
           </thead>
           <tbody>
-            {events.length ? events.map((e) => (
+            {events.map((e) => (
               <tr key={e.id}>
                 <td>{e.id}</td>
                 <td>{e.quarter}</td>
@@ -283,9 +301,7 @@ export default async function MatchStatsPdfPage({ params }: { params: { matchId:
                 <td>{e.player_id || '-'}</td>
                 <td>{String(e.event_type)}</td>
               </tr>
-            )) : (
-              <tr><td colSpan={6}>Ham olay kaydı bulunamadı.</td></tr>
-            )}
+            ))}
           </tbody>
         </table>
       </section>
