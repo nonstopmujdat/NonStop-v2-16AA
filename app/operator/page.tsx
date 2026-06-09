@@ -305,9 +305,12 @@ export default function OperatorPage() {
   }, [seconds]);
 
   function getDemoPlayerId(player: string) {
-    const match = player.match(/#(\d+)/);
+    const match = String(player || "").match(/#(\d+)/);
     if (!match) return null;
     const jersey = Number(match[1]);
+
+    // Demo veritabanındaki ilk oyuncular eski sıralamayla oluşturulduğu için
+    // #4-#15 arası özel eşleştirmeyi koruyoruz.
     const map: Record<number, number> = {
       7: 1,
       4: 2,
@@ -322,7 +325,15 @@ export default function OperatorPage() {
       14: 11,
       15: 12,
     };
-    return map[jersey] || null;
+
+    if (map[jersey]) return map[jersey];
+
+    // Yeni eklenen/demo listedeki #16, #17, #18... gibi oyuncuların
+    // seçili olmasına rağmen player_id bulunamaması sorununu çözer.
+    // #16 -> 13, #17 -> 14 ... şeklinde devam eder.
+    if (jersey >= 16 && jersey <= 99) return jersey - 3;
+
+    return null;
   }
 
 
