@@ -331,6 +331,52 @@ export default function OperatorPage() {
     return Number(operatorSide === "HOME" ? activeMatch.homeTeamId : activeMatch.awayTeamId) || (operatorSide === "HOME" ? 1 : 2);
   }
 
+  function statRequiresPlayer(eventType: string) {
+    const dbType = normalizeEventTypeForDb(eventType);
+    return new Set([
+      "2PA_MADE",
+      "2PA_MISS",
+      "3PA_MADE",
+      "3PA_MISS",
+      "FTA_MADE",
+      "FTA_MISS",
+      "AST",
+      "OREB",
+      "DREB",
+      "STL",
+      "BLK",
+      "BLK_AGAINST",
+      "TOV",
+      "FOUL",
+      "FOUL_DRAWN",
+    ]).has(dbType);
+  }
+
+  function validatePlayerForStat(eventType: string, player: string, payload: Record<string, any> = {}) {
+    const dbType = normalizeEventTypeForDb(eventType);
+    if (!statRequiresPlayer(dbType)) return true;
+
+    const playerId = payload.player_id ?? getDemoPlayerId(player);
+    if (!player || player === "YOK" || player === "PENDING" || !playerId) {
+      log(`SİSTEM: ${dbType} kaydedilemedi. Önce geçerli oyuncu seçiniz.`);
+      return false;
+    }
+
+    // Kendi takım istatistiklerinde oyuncu sahada olmalı.
+    // Rakip faulü gibi özel kayıtlar payload.allow_off_court ile istisna tutulur.
+    if (!payload.allow_off_court && !onCourt.includes(player)) {
+      log(`SİSTEM: ${player} sahada değil. Oyuncu istatistiği için önce sahadaki oyuncuyu seçiniz.`);
+      return false;
+    }
+
+    if (isFouledOut(player)) {
+      log(`SİSTEM: ${player} 5 faul nedeniyle istatistik alamaz.`);
+      return false;
+    }
+
+    return true;
+  }
+
   async function saveRosterToDb(nextStarters: string[] = starterChecked) {
     if (!activeMatch) return;
     const payload = {
@@ -441,6 +487,10 @@ export default function OperatorPage() {
   ) {
     const dbType = normalizeEventTypeForDb(type);
     const playerId = payload.player_id ?? getDemoPlayerId(player);
+
+    if (!validatePlayerForStat(dbType, player, { ...payload, player_id: playerId })) {
+      return;
+    }
 
     const event = {
       event_id: createEventId(),
@@ -557,8 +607,7 @@ export default function OperatorPage() {
       log("SİSTEM: maç kilitli, yeni istatistik girilemez.");
       return;
     }
-    if (isFouledOut(selectedPlayer)) {
-      log(`SİSTEM: ${selectedPlayer} 5 faul nedeniyle tekrar istatistik alamaz.`);
+    if (!validatePlayerForStat(type, selectedPlayer)) {
       return;
     }
     addQueue(type, selectedPlayer);
@@ -570,8 +619,8 @@ export default function OperatorPage() {
       log("SİSTEM: maç kilitli, şut girilemez.");
       return;
     }
-    if (isFouledOut(selectedPlayer)) {
-      log(`SİSTEM: ${selectedPlayer} 5 faul nedeniyle oyuna dönemez / istatistik alamaz.`);
+    const shotType = points === 1 ? (made ? "FTA_MADE" : "FTA_MISS") : points === 2 ? (made ? "2PA_MADE" : "2PA_MISS") : (made ? "3PA_MADE" : "3PA_MISS");
+    if (!validatePlayerForStat(shotType, selectedPlayer)) {
       return;
     }
     const ctx: ShotContext = {
@@ -714,6 +763,7 @@ export default function OperatorPage() {
       addQueue("FOUL", context.foul, {
         linked_basket_id: context.linked_basket_id,
         committed_by: context.foul,
+        allow_off_court: true,
       });
       log(`${fmt(seconds)} ${context.player} FOUL_DRAWN`);
       log(`${fmt(seconds)} ${context.foul} FOUL`);
@@ -733,6 +783,9 @@ export default function OperatorPage() {
   }
 
   function startFoulPick(type: string) {
+    if (!validatePlayerForStat(type, selectedPlayer)) {
+      return;
+    }
     stopClock();
     log("SİSTEM: faul seçimi için süre durdu. Devam için ▶ bas.");
     setPendingShot(null);
