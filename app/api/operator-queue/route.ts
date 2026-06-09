@@ -54,6 +54,8 @@ export async function GET(req: Request) {
         venue: m.venue_name || venueName || '',
         home: m.home_team_name || 'Ev Sahibi',
         away: m.away_team_name || 'Misafir',
+        homeTeamId: m.home_team_id || null,
+        awayTeamId: m.away_team_id || null,
         category: m.category_name || '-',
         competition: m.competition_name || 'Resmi Maç',
         competitionType: m.competition_type || 'LEAGUE',

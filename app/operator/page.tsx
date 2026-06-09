@@ -45,6 +45,8 @@ type DemoMatch = {
   competitionType?: "LEAGUE" | "TOURNAMENT" | "FRIENDLY" | "SPECIAL_MATCH";
   countsForStandings?: boolean;
   countsForSeasonStats?: boolean;
+  homeTeamId?: number | null;
+  awayTeamId?: number | null;
 };
 const DEMO_CITIES = ["Bursa", "İstanbul", "İzmir", "Ankara", "Kocaeli"];
 const DEMO_VENUES: DemoVenue[] = [
@@ -57,10 +59,10 @@ const DEMO_VENUES: DemoVenue[] = [
   { id: 7, city: "Kocaeli", name: "Şehit Polis Recep Topaloğlu" },
 ];
 const DEMO_TODAY_MATCHES: DemoMatch[] = [
-  { id: 1, time: "10:00", city: "Bursa", venue: "Nilüfer Spor Salonu", home: "FİNAL SPOR U14", away: "TOFAŞ U14", category: "U14", competition: "Bursa U14 A Ligi", competitionType: "LEAGUE", countsForStandings: true, countsForSeasonStats: true },
-  { id: 2, time: "12:00", city: "Bursa", venue: "Nilüfer Spor Salonu", home: "GEMLİK U14", away: "BURSA BASKET U14", category: "U14", competition: "Bursa U14 A Ligi", competitionType: "LEAGUE", countsForStandings: true, countsForSeasonStats: true },
-  { id: 3, time: "14:00", city: "Bursa", venue: "Tofaş Spor Salonu", home: "TOFAŞ U16", away: "FİNAL SPOR U16", category: "U16", competition: "Bursa U16 A Ligi", competitionType: "LEAGUE", countsForStandings: true, countsForSeasonStats: true },
-  { id: 4, time: "11:00", city: "İstanbul", venue: "Sinan Erdem Yan Salon", home: "İSTANBUL YILDIZLAR U14", away: "BASKET AKADEMİ U14", category: "U14", competition: "İstanbul U14 A Ligi", competitionType: "LEAGUE", countsForStandings: true, countsForSeasonStats: true },
+  { id: 1, time: "10:00", city: "Bursa", venue: "Nilüfer Spor Salonu", home: "FİNAL SPOR U14", away: "TOFAŞ U14", homeTeamId: 1, awayTeamId: 2, category: "U14", competition: "Bursa U14 A Ligi", competitionType: "LEAGUE", countsForStandings: true, countsForSeasonStats: true },
+  { id: 2, time: "12:00", city: "Bursa", venue: "Nilüfer Spor Salonu", home: "GEMLİK U14", away: "BURSA BASKET U14", homeTeamId: 3, awayTeamId: 4, category: "U14", competition: "Bursa U14 A Ligi", competitionType: "LEAGUE", countsForStandings: true, countsForSeasonStats: true },
+  { id: 3, time: "14:00", city: "Bursa", venue: "Tofaş Spor Salonu", home: "TOFAŞ U16", away: "FİNAL SPOR U16", homeTeamId: 5, awayTeamId: 6, category: "U16", competition: "Bursa U16 A Ligi", competitionType: "LEAGUE", countsForStandings: true, countsForSeasonStats: true },
+  { id: 4, time: "11:00", city: "İstanbul", venue: "Sinan Erdem Yan Salon", home: "İSTANBUL YILDIZLAR U14", away: "BASKET AKADEMİ U14", homeTeamId: 7, awayTeamId: 8, category: "U14", competition: "İstanbul U14 A Ligi", competitionType: "LEAGUE", countsForStandings: true, countsForSeasonStats: true },
 ];
 const HOME_PLAYERS = Array.from({ length: 26 }, (_, i) => {
   const jersey = i + 4;
@@ -323,6 +325,79 @@ export default function OperatorPage() {
     return map[jersey] || null;
   }
 
+
+  function getControlledTeamId() {
+    if (!activeMatch) return operatorSide === "HOME" ? 1 : 2;
+    return Number(operatorSide === "HOME" ? activeMatch.homeTeamId : activeMatch.awayTeamId) || (operatorSide === "HOME" ? 1 : 2);
+  }
+
+  async function saveRosterToDb(nextStarters: string[] = starterChecked) {
+    if (!activeMatch) return;
+    const payload = {
+      match_id: activeMatch.id,
+      team_id: getControlledTeamId(),
+      operator_side: operatorSide,
+      roster_type: isSpecialOrFriendly ? "SPECIAL_MATCH" : isTournamentMatch ? "TOURNAMENT" : "OFFICIAL",
+      is_special_match: isSpecialOrFriendly,
+      players: rosterChecked.map((player) => ({
+        player_id: getDemoPlayerId(player),
+        player_label: player,
+        jersey_no: Number(player.match(/#(\d+)/)?.[1] || 0) || null,
+        is_starter: nextStarters.includes(player),
+        is_on_court: nextStarters.includes(player),
+      })),
+    };
+
+    try {
+      const res = await fetch("/api/match-rosters", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        cache: "no-store",
+        body: JSON.stringify(payload),
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok || json?.ok === false) {
+        log(`SİSTEM: kadro Supabase kayıt hatası ${String(json?.error || res.statusText).slice(0, 120)}`);
+        return;
+      }
+      log(`SİSTEM: ${controlledTeamName} maç kadrosu Supabase'e kaydedildi (${json?.count || rosterChecked.length} oyuncu).`);
+    } catch (err: any) {
+      log(`SİSTEM: kadro kayıt API hatası ${String(err?.message || err).slice(0, 120)}`);
+    }
+  }
+
+  async function saveSubstitutionToDb(playerOut: string, playerIn: string) {
+    if (!activeMatch) return;
+    const payload = {
+      match_id: activeMatch.id,
+      team_id: getControlledTeamId(),
+      player_out_id: getDemoPlayerId(playerOut),
+      player_in_id: getDemoPlayerId(playerIn),
+      player_out_label: playerOut,
+      player_in_label: playerIn,
+      quarter,
+      game_clock: fmt(seconds),
+      operator_side: operatorSide,
+    };
+
+    try {
+      const res = await fetch("/api/substitutions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        cache: "no-store",
+        body: JSON.stringify(payload),
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok || json?.ok === false) {
+        log(`SİSTEM: değişiklik Supabase kayıt hatası ${String(json?.error || res.statusText).slice(0, 120)}`);
+        return;
+      }
+      log(`SİSTEM: değişiklik Supabase'e kaydedildi. ${playerOut} OUT / ${playerIn} IN`);
+    } catch (err: any) {
+      log(`SİSTEM: değişiklik API hatası ${String(err?.message || err).slice(0, 120)}`);
+    }
+  }
+
   function normalizeEventTypeForDb(type: string) {
     const raw = String(type || "")
       .trim()
@@ -408,8 +483,8 @@ export default function OperatorPage() {
         event_type: dbType,
         // V2.1.18: her online olay zorunlu olarak API'ye gider.
         // API demo-no-db cevabı verirse artık başarı sayılmaz; ekranda görünür hata yazar.
-        match_id: Number(payload.match_id ?? 1),
-        team_id: Number(payload.team_id ?? 1),
+        match_id: Number(payload.match_id ?? activeMatch?.id ?? 1),
+        team_id: Number(payload.team_id ?? getControlledTeamId()),
         player_id: playerId ?? null,
         related_player_id:
           payload.related_player_id ??
@@ -742,10 +817,13 @@ export default function OperatorPage() {
     stopClock();
     log("SİSTEM: oyuncu değişikliği için süre durdu. Devam için ▶ bas.");
     addQueue("SUBSTITUTION", playerOut, {
+      match_id: activeMatch?.id,
+      team_id: getControlledTeamId(),
       player_out: playerOut,
       player_in: playerIn,
       related_player_id: getDemoPlayerId(playerIn),
     });
+    saveSubstitutionToDb(playerOut, playerIn);
     log(`${fmt(seconds)} DEĞİŞİKLİK: ${playerOut} OUT / ${playerIn} IN`);
     setSubOut(null);
   }
@@ -778,6 +856,8 @@ export default function OperatorPage() {
           venue: String(m.venue || ""),
           home: String(m.home || "Ev Sahibi"),
           away: String(m.away || "Misafir"),
+          homeTeamId: Number(m.homeTeamId || m.home_team_id || 0) || null,
+          awayTeamId: Number(m.awayTeamId || m.away_team_id || 0) || null,
           category: String(m.category || "-"),
           competition: String(m.competition || "Resmi Maç"),
           competitionType: (m.competitionType || "LEAGUE") as DemoMatch["competitionType"],
@@ -831,6 +911,8 @@ export default function OperatorPage() {
       venue: selectedVenue,
       home,
       away,
+      homeTeamId: 1,
+      awayTeamId: 2,
       category: "SERBEST",
       competition: specialMatchName.trim() || (operatorMatchType === "TOURNAMENT" ? "Turnuva Maçı" : "Özel / Hazırlık Maçı"),
       competitionType: operatorMatchType,
@@ -846,11 +928,12 @@ export default function OperatorPage() {
     setFlowStep("ROSTER");
   }
 
-  function confirmStarters() {
+  async function confirmStarters() {
     if (starterChecked.length < 5) {
       setForfeitWarning(`${controlledTeamName} ilk 5 çıkaramadı. Hükmen yenilgi riski var.`);
       return;
     }
+    await saveRosterToDb(starterChecked.slice(0, 5));
     setOnCourt(starterChecked.slice(0, 5));
     setBench(rosterChecked.filter((p) => !starterChecked.includes(p)));
     setSelectedPlayer(starterChecked[0]);
