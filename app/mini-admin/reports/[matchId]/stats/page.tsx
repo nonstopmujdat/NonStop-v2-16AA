@@ -51,6 +51,7 @@ type AdvancedRow = {
 
 function groupEvents(events: any[]): BasicRow[] {
   const map = new Map<string, BasicRow>();
+
   for (const e of events) {
     const key = `${e.team_id || '-'}:${e.player_id || '-'}`;
     const row = map.get(key) || {
@@ -65,17 +66,23 @@ function groupEvents(events: any[]): BasicRow[] {
       fouls: 0,
       events: 0,
     };
+
     const type = String(e.event_type || '').toUpperCase();
     row.events += 1;
-    if (type.includes('POINT') || type.includes('BASKET') || type.includes('SCORE')) row.points += Number(e.points || 0) || 0;
+
+    if (type.includes('POINT') || type.includes('BASKET') || type.includes('SCORE')) {
+      row.points += Number(e.points || 0) || 0;
+    }
     if (type.includes('REBOUND') || type.includes('RIBAUND') || type === 'OREB' || type === 'DREB') row.rebounds += 1;
     if (type.includes('ASSIST') || type.includes('ASIST') || type === 'AST') row.assists += 1;
     if (type.includes('STEAL') || type.includes('TOP_CALMA') || type === 'STL') row.steals += 1;
     if (type.includes('BLOCK') || type.includes('BLOK') || type === 'BLK') row.blocks += 1;
     if (type.includes('TURNOVER') || type.includes('TOP_KAYBI') || type === 'TOV') row.turnovers += 1;
     if (type.includes('FOUL') || type.includes('FAUL') || type === 'PF') row.fouls += 1;
+
     map.set(key, row);
   }
+
   return Array.from(map.values());
 }
 
@@ -122,9 +129,10 @@ export default async function MatchStatsPdfPage({ params }: { params: { matchId:
       <section className="card">
         <h1>NONSTOP Maç İstatistik Raporu</h1>
         <p><b>Maç ID:</b> {matchId}</p>
-        <p><b>Maç:</b> {match?.home_team_name || '-'} - {match?.away_team_name || '-'}</p>
-        <p><b>Tarih/Saat:</b> {match?.match_date || '-'} {match?.match_time || ''}</p>
+        <p><b>Organizasyon:</b> {match?.competition_name || '-'}</p>
         <p><b>Salon:</b> {match?.venue_name || '-'}</p>
+        <p><b>Ev Sahibi:</b> {match?.home_team_name || '-'}</p>
+        <p><b>Misafir:</b> {match?.away_team_name || '-'}</p>
         <p><b>Skor:</b> {match?.home_score ?? 0} - {match?.away_score ?? 0}</p>
         <p className="no-print"><button type="button" id="printButton">PDF Yazdır</button></p>
       </section>
@@ -134,9 +142,11 @@ export default async function MatchStatsPdfPage({ params }: { params: { matchId:
         <p style={{ marginTop: 0 }}>
           VP = ham performans, Perf40 = süreye göre verim, MVP = maçın en değerli oyuncusu puanı.
         </p>
+
         {advancedError ? (
-          <p><b>Uyarı:</b> live_player_advanced_stats görünümü okunamadı. Supabase SQL kurulumu kontrol edilmeli. Hata: {advancedError}</p>
+          <p><b>Uyarı:</b> live_player_advanced_stats görünümü okunamadı. Hata: {advancedError}</p>
         ) : null}
+
         <table>
           <thead>
             <tr>
@@ -221,7 +231,7 @@ export default async function MatchStatsPdfPage({ params }: { params: { matchId:
             </tr>
           </thead>
           <tbody>
-            {rows.map((r, i) => (
+            {rows.length ? rows.map((r, i) => (
               <tr key={i}>
                 <td>{r.team_id || '-'}</td>
                 <td>{r.player_id || '-'}</td>
@@ -234,7 +244,9 @@ export default async function MatchStatsPdfPage({ params }: { params: { matchId:
                 <td>{r.fouls}</td>
                 <td>{r.events}</td>
               </tr>
-            ))}
+            )) : (
+              <tr><td colSpan={10}>Bu maç için olay kaydı bulunamadı.</td></tr>
+            )}
           </tbody>
         </table>
       </section>
@@ -246,7 +258,7 @@ export default async function MatchStatsPdfPage({ params }: { params: { matchId:
             <tr><th>ID</th><th>Periyot</th><th>Saat</th><th>Takım</th><th>Oyuncu</th><th>Olay</th></tr>
           </thead>
           <tbody>
-            {events.map((e) => (
+            {events.length ? events.map((e) => (
               <tr key={e.id}>
                 <td>{e.id}</td>
                 <td>{e.quarter}</td>
@@ -255,7 +267,9 @@ export default async function MatchStatsPdfPage({ params }: { params: { matchId:
                 <td>{e.player_id || '-'}</td>
                 <td>{String(e.event_type)}</td>
               </tr>
-            ))}
+            )) : (
+              <tr><td colSpan={6}>Ham olay kaydı bulunamadı.</td></tr>
+            )}
           </tbody>
         </table>
       </section>
