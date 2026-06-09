@@ -16,6 +16,14 @@ type BasicRow = {
   events: number;
 };
 
+type MinuteRow = {
+  match_id: number;
+  team_id: number | null;
+  player_id: number | null;
+  minutes_played: number | null;
+  minutes_display: string | null;
+};
+
 type AdvancedRow = {
   match_id: number;
   team_id: number | null;
@@ -99,21 +107,27 @@ export default async function MatchStatsPdfPage({ params }: { params: { matchId:
   let events: any[] = [];
   let rows: BasicRow[] = [];
   let advancedRows: AdvancedRow[] = [];
+  let minuteMap = new Map<string, MinuteRow>();
   let advancedError = '';
+  let minutesError = '';
 
   if (hasSupabaseAdminConfig()) {
     const supabase = getSupabaseAdmin();
-    const [matchRes, eventRes, advancedRes] = await Promise.all([
+    const [matchRes, eventRes, advancedRes, minutesRes] = await Promise.all([
       supabase.from('operator_match_queue').select('*').eq('match_id', matchId).maybeSingle(),
       supabase.from('match_events').select('*').eq('match_id', matchId).order('id'),
       supabase.from('live_player_advanced_stats').select('*').eq('match_id', matchId).order('team_id').order('player_id'),
+      supabase.from('live_player_minutes').select('*').eq('match_id', matchId),
     ]);
 
     match = matchRes.data;
     events = eventRes.data || [];
     rows = groupEvents(events);
     advancedRows = (advancedRes.data || []) as AdvancedRow[];
+    const minuteRows = (minutesRes.data || []) as MinuteRow[];
+    minuteMap = new Map(minuteRows.map((r) => [`${r.team_id ?? '-'}:${r.player_id ?? '-'}`, r]));
     advancedError = advancedRes.error?.message || '';
+    minutesError = minutesRes.error?.message || '';
   }
 
   return (
@@ -152,6 +166,7 @@ export default async function MatchStatsPdfPage({ params }: { params: { matchId:
             <tr>
               <th>Takım</th>
               <th>Oyuncu</th>
+              <th>MIN</th>
               <th>2PM</th>
               <th>2PA</th>
               <th>3PM</th>
@@ -182,6 +197,7 @@ export default async function MatchStatsPdfPage({ params }: { params: { matchId:
               <tr key={`${r.match_id}-${r.team_id}-${r.player_id}-${i}`}>
                 <td>{r.team_name || r.team_id || '-'}</td>
                 <td>{r.player_name || r.player_id || '-'}</td>
+                <td><b>{minuteMap.get(`${r.team_id ?? '-'}:${r.player_id ?? '-'}`)?.minutes_display || '-'}</b></td>
                 <td>{numberCell(r.two_pm)}</td>
                 <td>{numberCell(r.two_pa)}</td>
                 <td>{numberCell(r.three_pm)}</td>
@@ -207,7 +223,7 @@ export default async function MatchStatsPdfPage({ params }: { params: { matchId:
                 <td><b>{numberCell(r.mvp_score)}</b></td>
               </tr>
             )) : (
-              <tr><td colSpan={25}>Bu maç için gelişmiş istatistik verisi bulunamadı.</td></tr>
+              <tr><td colSpan={26}>Bu maç için gelişmiş istatistik verisi bulunamadı.</td></tr>
             )}
           </tbody>
         </table>
