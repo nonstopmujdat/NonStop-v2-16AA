@@ -362,12 +362,12 @@ export default function OperatorPage() {
       return false;
     }
 
-    // Kendi takım istatistiklerinde oyuncu sahada olmalı.
-    // Rakip faulü gibi özel kayıtlar payload.allow_off_court ile istisna tutulur.
-    if (!payload.allow_off_court && !onCourt.includes(player)) {
-      log(`SİSTEM: ${player} sahada değil. Oyuncu istatistiği için önce sahadaki oyuncuyu seçiniz.`);
-      return false;
-    }
+    // Oyuncu doğrulamada asıl şart: geçerli player_id bulunmasıdır.
+    // Not: onCourt listesi bazen oyuncu etiketiyle birebir eşleşmediği için
+    // seçili oyuncu varken hatalı “oyuncu seçiniz” uyarısı verebiliyordu.
+    // Bu nedenle FOUL_DRAWN / FOUL / şut / asist gibi kayıtlar için
+    // oyuncu ID'si varsa kayıt yapılmasına izin veriyoruz. Süre ve sahada olma
+    // hesabı ayrı olarak match_rosters + substitutions üzerinden yapılır.
 
     if (isFouledOut(player)) {
       log(`SİSTEM: ${player} 5 faul nedeniyle istatistik alamaz.`);
@@ -759,6 +759,7 @@ export default function OperatorPage() {
       addQueue("FOUL_DRAWN", context.player, {
         linked_basket_id: context.linked_basket_id,
         drawn_by: context.player,
+        allow_off_court: true,
       });
       addQueue("FOUL", context.foul, {
         linked_basket_id: context.linked_basket_id,
