@@ -79,7 +79,10 @@ function leaderCard(title: string, rows: MvpLeaderRow[]) {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
           {rows.slice(0, 5).map((r, index) => (
             <div key={`${title}-${r.player_id}-${index}`} className="stat-card">
-              <b>{index === 0 ? '🥇 ' : index === 1 ? '🥈 ' : index === 2 ? '🥉 ' : ''}{r.player_name || r.player_id}</b>
+              <b>
+                {index === 0 ? '🥇 ' : index === 1 ? '🥈 ' : index === 2 ? '🥉 ' : ''}
+                {r.player_name || r.player_id}
+              </b>
               <span>MVP: {cell(r.mvp_score)}</span>
               <small>VP: {cell(r.vp_score)} · PTS: {cell(r.pts)} · +/- {cell(r.plus_minus)}</small>
             </div>
