@@ -138,6 +138,7 @@ export default function OperatorPage() {
   const clickTimer = useRef<any>(null);
   const clickPoints = useRef<1 | 2 | 3 | null>(null);
   const [markers, setMarkers] = useState<CourtMarker[]>([]);
+  const [swapCourt, setSwapCourt] = useState(false);
 
   const sourceMatches = adminMatches.length ? adminMatches : DEMO_TODAY_MATCHES;
   const todaysVenueMatches = sourceMatches.filter((m) => m.city === selectedCity && m.venue === selectedVenue);
@@ -270,6 +271,7 @@ export default function OperatorPage() {
     if (quarter < 4) {
       const nextQuarter = quarter + 1;
       setQuarter(nextQuarter);
+      if (nextQuarter === 3) setSwapCourt(true);
       setSeconds(600);
       resetPeriodTeamFouls();
       log(
@@ -648,19 +650,8 @@ export default function OperatorPage() {
 
     if (points === 1) {
       stopClock();
-      log("SİSTEM: serbest atış / +1 için süre durdu. Devam için ▶ bas.");
-      saveShot(ctx, { x: 15, y: 50 });
-      setMarkers((prev) => [
-        {
-          id: createEventId(),
-          x: 15,
-          y: 50,
-          label: made ? "FT✓" : "FT×",
-          made,
-          kind: "shot",
-        },
-        ...prev,
-      ]);
+      log("SİSTEM: serbest atış / +1 için süre durdu. Şut yerini sahadan işaretle.");
+      setPendingShot(ctx);
       return;
     }
 
@@ -747,6 +738,12 @@ export default function OperatorPage() {
       `${fmt(seconds)} ${context.player} ${type} ${tag}${shot ? ` (${shot.x.toFixed(0)}%, ${shot.y.toFixed(0)}%)` : ""}`,
     );
 
+    if (context.made && quarter >= 4 && seconds <= 120) {
+      stopClock();
+      log("SİSTEM: 4. çeyrek son 2 dk sayı oldu, süre durdu. Devam için ▶ bas.");
+      persistMatchState("live");
+    }
+
     if (
       context.made &&
       context.assist &&
@@ -807,8 +804,12 @@ export default function OperatorPage() {
 
   function handleCourtClick(e: React.MouseEvent<HTMLDivElement>) {
     const rect = e.currentTarget.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    let x = ((e.clientX - rect.left) / rect.width) * 100;
+    let y = ((e.clientY - rect.top) / rect.height) * 100;
+
+    if (swapCourt) {
+      x = 100 - x;
+    }
 
     if (pendingFoul) {
       const type = pendingFoul;
@@ -1244,30 +1245,38 @@ export default function OperatorPage() {
 
       <main className="operator-layout">
         <section className="court-area">
-          <div className="court-toolbar">
-            <button
-              className={courtTab === "court" ? "active" : ""}
-              onClick={() => setCourtTab("court")}
+          <div className="court-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <button
+                className={courtTab === "court" ? "active" : ""}
+                onClick={() => setCourtTab("court")}
+              >
+                Saha
+              </button>
+              <button
+                className={courtTab === "shots" ? "active" : ""}
+                onClick={() => setCourtTab("shots")}
+              >
+                Şutlar
+              </button>
+              <button
+                className={courtTab === "fouls" ? "active" : ""}
+                onClick={() => setCourtTab("fouls")}
+              >
+                Fauller
+              </button>
+              <button
+                className={courtTab === "heat" ? "active" : ""}
+                onClick={() => setCourtTab("heat")}
+              >
+                Heat Map
+              </button>
+            </div>
+            <button 
+              style={{ background: swapCourt ? 'var(--nn-cyan)' : 'transparent', color: swapCourt ? '#000' : 'var(--nn-cyan)', border: '1px solid var(--nn-cyan)', padding: '0.25rem 0.75rem', borderRadius: '4px', fontSize: '0.8rem', fontWeight: 'bold' }} 
+              onClick={() => setSwapCourt(prev => !prev)}
             >
-              Saha
-            </button>
-            <button
-              className={courtTab === "shots" ? "active" : ""}
-              onClick={() => setCourtTab("shots")}
-            >
-              Şutlar
-            </button>
-            <button
-              className={courtTab === "fouls" ? "active" : ""}
-              onClick={() => setCourtTab("fouls")}
-            >
-              Fauller
-            </button>
-            <button
-              className={courtTab === "heat" ? "active" : ""}
-              onClick={() => setCourtTab("heat")}
-            >
-              Heat Map
+              Saha Yönünü Çevir 🔁
             </button>
           </div>
 
@@ -1296,8 +1305,9 @@ export default function OperatorPage() {
           )}
 
           <div
-            className={`court ${pendingShot || pendingFoul ? "picking-shot" : ""} ${courtTab === "heat" ? "heat-mode" : ""}`}
+            className={`court ${pendingShot || pendingFoul ? "picking-shot" : ""} ${courtTab === "heat" ? "heat-mode" : ""} ${swapCourt ? "flipped" : ""}`}
             onClick={handleCourtClick}
+            style={{ transform: swapCourt ? 'scaleX(-1)' : 'none', transition: 'transform 0.5s ease-in-out' }}
           >
             <div className="half-line" />
             <div className="center-circle" />
@@ -1311,7 +1321,7 @@ export default function OperatorPage() {
               <div
                 key={m.id}
                 className={`marker ${m.kind} ${m.made ? "made" : "miss"}`}
-                style={{ left: `${m.x}%`, top: `${m.y}%` }}
+                style={{ left: `${m.x}%`, top: `${m.y}%`, transform: swapCourt ? 'scaleX(-1) translate(50%, -50%)' : 'translate(-50%, -50%)' }}
               >
                 {courtTab === "heat" ? "" : m.label}
               </div>
@@ -1340,9 +1350,20 @@ export default function OperatorPage() {
                   setSelectedPlayer(p);
                 }}
               >
-                <div>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
                   <b>{p}</b>
-                  <small>{isFouledOut(p) ? "5 Faul - Oyun Dışı" : `Oyunda / PF ${playerFouls[p] || 0}`}</small>
+                  <span style={{
+                    marginLeft: '0.5rem',
+                    padding: '0.15rem 0.4rem',
+                    fontSize: '0.75rem',
+                    fontWeight: 'bold',
+                    borderRadius: '4px',
+                    color: '#fff',
+                    backgroundColor: isFouledOut(p) ? '#ef4444' : (playerFouls[p] === 4 ? '#f97316' : (playerFouls[p] === 3 ? '#eab308' : '#374151')),
+                    boxShadow: isFouledOut(p) ? '0 0 5px rgba(239, 68, 68, 0.5)' : 'none'
+                  }}>
+                    F: {playerFouls[p] || 0}/5 {isFouledOut(p) && "DIŞI"}
+                  </span>
                 </div>
                 <button
                   onClick={(e) => {
@@ -1370,8 +1391,17 @@ export default function OperatorPage() {
                     }
                     setSelectedPlayer(p);
                   }}
+                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
                 >
-                  {p} {isFouledOut(p) ? "🚫" : ""}
+                  <span>{p} {isFouledOut(p) ? "🚫" : ""}</span>
+                  <span style={{
+                    padding: '0.15rem 0.4rem',
+                    fontSize: '0.7rem',
+                    fontWeight: 'bold',
+                    borderRadius: '4px',
+                    color: '#fff',
+                    backgroundColor: isFouledOut(p) ? '#ef4444' : (playerFouls[p] === 4 ? '#f97316' : (playerFouls[p] === 3 ? '#eab308' : '#374151')),
+                  }}>F: {playerFouls[p] || 0}</span>
                 </button>
               ))}
             </div>
