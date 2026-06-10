@@ -15,10 +15,27 @@ export default function Home() {
         textAlign: 'center',
         boxShadow: '0 10px 40px rgba(0,0,0,0.5), inset 0 0 40px rgba(0, 240, 255, 0.05)'
       }}>
-        <h1 className="nn-title" style={{ fontSize: '5.5rem', marginBottom: '1rem', textShadow: '0 0 20px rgba(0, 240, 255, 0.5)' }}>
-          <span style={{ color: 'var(--nn-cyan)' }}>NON</span>STOP V2.1
-        </h1>
-        <p className="nn-subtitle" style={{ fontSize: '1.25rem', letterSpacing: '0.2em', color: '#fff' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '2rem', marginBottom: '1rem' }}>
+          <div style={{ 
+            width: '80px', 
+            height: '80px', 
+            animation: 'spin 10s linear infinite',
+            filter: 'drop-shadow(0 0 15px var(--nn-orange))'
+          }}>
+            <svg viewBox="0 0 100 100" style={{ width: '100%', height: '100%', fill: 'none', stroke: 'var(--nn-orange)', strokeWidth: '4' }}>
+              <circle cx="50" cy="50" r="45" fill="rgba(255, 87, 34, 0.1)" />
+              <path d="M 50 5 L 50 95 M 5 50 L 95 50" strokeDasharray="5,5" />
+              <path d="M 18 18 Q 50 50 18 82 M 82 18 Q 50 50 82 82" />
+            </svg>
+            <style>{`
+              @keyframes spin { 100% { transform: rotate(360deg); } }
+            `}</style>
+          </div>
+          <h1 className="nn-title" style={{ fontSize: '5.5rem', margin: 0, textShadow: '0 0 20px rgba(0, 240, 255, 0.5)' }}>
+            <span style={{ color: 'var(--nn-cyan)' }}>NON</span>STOP V2.1
+          </h1>
+        </div>
+        <p className="nn-subtitle" style={{ fontSize: '1.25rem', letterSpacing: '0.2em', color: '#fff', marginTop: '1rem' }}>
           Yeni Nesil Basketbol Lig & Maç Yönetim Sistemi
         </p>
         <p style={{ maxWidth: '650px', margin: '1.5rem auto', color: 'var(--nn-text-muted)', lineHeight: '1.6', fontSize: '1.1rem' }}>

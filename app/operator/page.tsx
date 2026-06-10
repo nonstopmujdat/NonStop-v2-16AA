@@ -1009,117 +1009,141 @@ export default function OperatorPage() {
   if (flowStep !== "GAME") {
     const sidePlayers = operatorSide === "HOME" ? HOME_PLAYERS : AWAY_PLAYERS;
     return (
-      <div className="operator-setup">
-        <div className="setup-card">
-          <h1>NONSTOP Operatör Akışı</h1>
-          <p>İl seç → salon seç → bugünkü maç veya özel maç → görev tarafı → maç kadrosu → ilk 5 → maç ekranı</p>
+      <main className="nn-container" style={{ maxWidth: '800px', display: 'flex', flexDirection: 'column', gap: '1.5rem', marginTop: '2rem' }}>
+        <div className="nn-header-area">
+          <h1 className="nn-title" style={{ textAlign: 'center' }}>NONSTOP Operatör Akışı</h1>
+          <p className="nn-subtitle" style={{ textAlign: 'center' }}>İl seç → salon seç → bugünkü maç veya özel maç → görev tarafı → maç kadrosu → ilk 5 → maç ekranı</p>
+        </div>
 
+        <div className="nn-card">
           {flowStep === "CITY" && (
-            <div className="setup-section">
-              <h2>1. İl Seç</h2>
-              <p>Önce il seçilir. Böylece yüzlerce salon içinde karışıklık olmaz.</p>
-              <select value={selectedCity} onChange={(e) => {
-                const nextCity = e.target.value;
-                setSelectedCity(nextCity);
-                const firstVenue = allVenuesForSelect.find((v) => v.city === nextCity)?.name || "";
-                setSelectedVenue(firstVenue);
-              }}>
-                {cityOptions.map((c) => <option key={c}>{c}</option>)}
-              </select>
-              <button className="primary" onClick={() => setFlowStep("VENUE")}>Salon Seçimine Geç</button>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <h2 style={{ fontSize: '1.5rem', color: '#fff', borderBottom: '1px solid var(--nn-border)', paddingBottom: '0.5rem' }}>1. İl Seç</h2>
+              <p style={{ color: 'var(--nn-text-muted)' }}>Önce il seçilir. Böylece yüzlerce salon içinde karışıklık olmaz.</p>
+              <div className="nn-form-group">
+                <label className="nn-form-label">Şehir Seçimi</label>
+                <select className="nn-select" value={selectedCity} onChange={(e) => {
+                  const nextCity = e.target.value;
+                  setSelectedCity(nextCity);
+                  const firstVenue = allVenuesForSelect.find((v) => v.city === nextCity)?.name || "";
+                  setSelectedVenue(firstVenue);
+                }}>
+                  {cityOptions.map((c) => <option key={c}>{c}</option>)}
+                </select>
+              </div>
+              <button className="nn-button nn-button-primary" style={{ alignSelf: 'flex-start', marginTop: '1rem' }} onClick={() => setFlowStep("VENUE")}>Salon Seçimine Geç &rarr;</button>
             </div>
           )}
 
           {flowStep === "VENUE" && (
-            <div className="setup-section">
-              <h2>2. Salon Seç</h2>
-              <p>Seçili il: <b>{selectedCity}</b></p>
-              <select value={selectedVenue} onChange={(e) => setSelectedVenue(e.target.value)}>
-                {cityVenues.map((v) => <option key={v.id}>{v.name}</option>)}
-              </select>
-              <button className="primary" onClick={() => setFlowStep("MATCH")}>Bugünkü Maçları Getir</button>
-              <button onClick={() => setFlowStep("CITY")}>İl Seçimine Geri Dön</button>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <h2 style={{ fontSize: '1.5rem', color: '#fff', borderBottom: '1px solid var(--nn-border)', paddingBottom: '0.5rem' }}>2. Salon Seç</h2>
+              <p style={{ color: 'var(--nn-text-muted)' }}>Seçili il: <b style={{ color: 'var(--nn-cyan)' }}>{selectedCity}</b></p>
+              <div className="nn-form-group">
+                <label className="nn-form-label">Salon Seçimi</label>
+                <select className="nn-select" value={selectedVenue} onChange={(e) => setSelectedVenue(e.target.value)}>
+                  {cityVenues.map((v) => <option key={v.id}>{v.name}</option>)}
+                </select>
+              </div>
+              <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+                <button className="nn-button nn-button-primary" onClick={() => setFlowStep("MATCH")}>Bugünkü Maçları Getir &rarr;</button>
+                <button className="nn-button" style={{ background: 'transparent' }} onClick={() => setFlowStep("CITY")}>&larr; İl Seçimine Dön</button>
+              </div>
             </div>
           )}
 
           {flowStep === "MATCH" && (
-            <div className="setup-section">
-              <h2>3. Bugünkü Maç Sırası</h2>
-              <p>{queueInfo}</p>
-              {todaysVenueMatches.length === 0 ? <div className="warning-box">Bu salon için bugün maç bulunamadı. Mini Admin’den maç oluşturduktan sonra tekrar deneyin.</div> : null}
-              {todaysVenueMatches.map((m, index) => (
-                <button key={m.id} className="match-card" onClick={() => { setActiveMatch(m); setFlowStep("ROSTER"); }}>
-                  <b>{index + 1}. Maç • {m.time}</b>
-                  <span>{m.home} - {m.away}</span>
-                  <small>{m.competition}</small>
-                </button>
-              ))}
-
-              <div className="special-match-box">
-                <h3>Supervisor Özel / Hazırlık Maçı</h3>
-                <p>U14 - U16, karma takım veya resmi fikstüre girmeyen maçlar için. Bu maç lig puan durumuna işlemez; kendi içinde istatistik ve şut haritası tutar.</p>
-                <div className="special-grid">
-                  <label>Maç türü<select value={operatorMatchType} onChange={(e) => setOperatorMatchType(e.target.value as any)}><option value="FRIENDLY">Hazırlık Maçı</option><option value="SPECIAL_MATCH">Özel Maç</option><option value="TOURNAMENT">Turnuva Maçı</option></select></label>
-                  <label>Maç adı<input value={specialMatchName} onChange={(e) => setSpecialMatchName(e.target.value)} /></label>
-                  <label>1. Takım<input value={specialHomeName} onChange={(e) => setSpecialHomeName(e.target.value)} /></label>
-                  <label>2. Takım / Karma<input value={specialAwayName} onChange={(e) => setSpecialAwayName(e.target.value)} /></label>
-                  <span className="checkbox-line">Hazırlık/özel maçlar sezon ve puan durumuna işlemez. Turnuva maçları kariyerde ayrı “Turnuvalar” sekmesinde görünür.</span>
-                </div>
-                <button className="primary" onClick={createSpecialMatch}>Maçı Operatör Akışına Al</button>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <h2 style={{ fontSize: '1.5rem', color: '#fff', borderBottom: '1px solid var(--nn-border)', paddingBottom: '0.5rem' }}>3. Bugünkü Maç Sırası</h2>
+              <p style={{ color: 'var(--nn-cyan)' }}>{queueInfo}</p>
+              {todaysVenueMatches.length === 0 ? <div style={{ padding: '1rem', background: 'rgba(239,68,68,0.1)', color: '#fca5a5', border: '1px solid #ef4444', borderRadius: '8px' }}>Bu salon için bugün maç bulunamadı. Mini Admin’den maç oluşturduktan sonra tekrar deneyin.</div> : null}
+              
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1rem', marginTop: '1rem' }}>
+                {todaysVenueMatches.map((m, index) => (
+                  <button key={m.id} className="nn-button" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', padding: '1rem', height: 'auto', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--nn-border)' }} onClick={() => { setActiveMatch(m); setFlowStep("ROSTER"); }}>
+                    <b style={{ color: 'var(--nn-cyan)', marginBottom: '0.25rem' }}>{index + 1}. Maç • {m.time}</b>
+                    <span style={{ fontSize: '1.1rem', color: '#fff', marginBottom: '0.25rem' }}>{m.home} - {m.away}</span>
+                    <small style={{ color: 'var(--nn-text-muted)' }}>{m.competition}</small>
+                  </button>
+                ))}
               </div>
-              <button onClick={() => setFlowStep("VENUE")}>Salon Seçimine Geri Dön</button>
+
+              <div style={{ marginTop: '2rem', paddingTop: '2rem', borderTop: '1px solid var(--nn-border)' }}>
+                <h3 style={{ fontSize: '1.25rem', color: 'var(--nn-orange)', marginBottom: '0.5rem' }}>Supervisor Özel / Hazırlık Maçı</h3>
+                <p style={{ color: 'var(--nn-text-muted)', fontSize: '0.9rem', marginBottom: '1rem' }}>U14 - U16, karma takım veya resmi fikstüre girmeyen maçlar için. Bu maç lig puan durumuna işlemez; kendi içinde istatistik ve şut haritası tutar.</p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
+                  <div className="nn-form-group">
+                    <label className="nn-form-label">Maç türü</label>
+                    <select className="nn-select" value={operatorMatchType} onChange={(e) => setOperatorMatchType(e.target.value as any)}><option value="FRIENDLY">Hazırlık Maçı</option><option value="SPECIAL_MATCH">Özel Maç</option><option value="TOURNAMENT">Turnuva Maçı</option></select>
+                  </div>
+                  <div className="nn-form-group">
+                    <label className="nn-form-label">Maç adı</label>
+                    <input className="nn-input" value={specialMatchName} onChange={(e) => setSpecialMatchName(e.target.value)} />
+                  </div>
+                  <div className="nn-form-group">
+                    <label className="nn-form-label">1. Takım</label>
+                    <input className="nn-input" value={specialHomeName} onChange={(e) => setSpecialHomeName(e.target.value)} />
+                  </div>
+                  <div className="nn-form-group">
+                    <label className="nn-form-label">2. Takım / Karma</label>
+                    <input className="nn-input" value={specialAwayName} onChange={(e) => setSpecialAwayName(e.target.value)} />
+                  </div>
+                </div>
+                <button className="nn-button nn-button-success" onClick={createSpecialMatch}>Maçı Operatör Akışına Al</button>
+              </div>
+              <button className="nn-button" style={{ background: 'transparent', alignSelf: 'flex-start', marginTop: '1rem' }} onClick={() => setFlowStep("VENUE")}>&larr; Salon Seçimine Dön</button>
             </div>
           )}
 
           {flowStep === "ROSTER" && activeMatch && (
-            <div className="setup-section">
-              <h2>4. Operatör Tarafı ve Maç Kadrosu</h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <h2 style={{ fontSize: '1.5rem', color: '#fff', borderBottom: '1px solid var(--nn-border)', paddingBottom: '0.5rem' }}>4. Operatör Tarafı ve Maç Kadrosu</h2>
               {(activeMatch.competitionType === "SPECIAL_MATCH" || activeMatch.competitionType === "FRIENDLY" || activeMatch.competitionType === "TOURNAMENT") ? (
-                <div className="info-box">
-                  <b>{activeMatch.competitionType === "TOURNAMENT" ? "Turnuva Maçı" : "Özel/Hazırlık Maçı"}</b><br />
-                  {activeMatch.competitionType === "TOURNAMENT" ? "Bu maç oyuncu ve takım kartında Turnuvalar sekmesine ayrılır." : "Bu maç puan durumuna işlemez. Şut haritası, faul haritası, oyuncu ve takım maç istatistikleri kendi içinde tutulur."}
-                  <br />{activeMatch.competitionType === "TOURNAMENT" ? "Turnuva kadro limiti resmi maç gibi 12 oyuncudur." : "Bu maç sezon istatistiğine işlemez. Oyuncu profilinde Özel/Hazırlık Maçları bölümünde ayrı görünür."}
+                <div style={{ padding: '1rem', background: 'rgba(0, 240, 255, 0.1)', color: 'var(--nn-cyan)', border: '1px solid var(--nn-cyan)', borderRadius: '8px' }}>
+                  <b style={{ color: '#fff' }}>{activeMatch.competitionType === "TOURNAMENT" ? "Turnuva Maçı" : "Özel/Hazırlık Maçı"}</b><br />
+                  <span style={{ fontSize: '0.9rem' }}>{activeMatch.competitionType === "TOURNAMENT" ? "Bu maç oyuncu ve takım kartında Turnuvalar sekmesine ayrılır." : "Bu maç puan durumuna işlemez. Şut haritası, faul haritası, oyuncu ve takım maç istatistikleri kendi içinde tutulur."}</span>
+                  <br /><span style={{ fontSize: '0.9rem' }}>{activeMatch.competitionType === "TOURNAMENT" ? "Turnuva kadro limiti resmi maç gibi 12 oyuncudur." : "Bu maç sezon istatistiğine işlemez. Oyuncu profilinde Özel/Hazırlık Maçları bölümünde ayrı görünür."}</span>
                 </div>
               ) : null}
-              <div className="side-grid">
-                <button className={operatorSide === "HOME" ? "active" : ""} onClick={() => { setOperatorSide("HOME"); setRosterChecked(HOME_PLAYERS.slice(0, 8)); setStarterChecked(HOME_PLAYERS.slice(0, 5)); }}>Ev Sahibi Operatörü<br/><small>Süreyi başlatabilir</small></button>
-                <button className={operatorSide === "AWAY" ? "active" : ""} onClick={() => { setOperatorSide("AWAY"); setRosterChecked(AWAY_PLAYERS.slice(0, 8)); setStarterChecked(AWAY_PLAYERS.slice(0, 5)); }}>Misafir Operatörü<br/><small>Süreyi başlatamaz</small></button>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', margin: '1rem 0' }}>
+                <button className="nn-button" style={{ display: 'flex', flexDirection: 'column', height: 'auto', padding: '1rem', border: operatorSide === "HOME" ? '2px solid var(--nn-cyan)' : '1px solid var(--nn-border)', background: operatorSide === "HOME" ? 'rgba(0,240,255,0.1)' : 'transparent' }} onClick={() => { setOperatorSide("HOME"); setRosterChecked(HOME_PLAYERS.slice(0, 8)); setStarterChecked(HOME_PLAYERS.slice(0, 5)); }}><b style={{ color: operatorSide === "HOME" ? '#fff' : 'var(--nn-text-muted)', fontSize: '1.1rem' }}>Ev Sahibi Operatörü</b><small style={{ color: 'var(--nn-text-muted)' }}>Süreyi başlatabilir</small></button>
+                <button className="nn-button" style={{ display: 'flex', flexDirection: 'column', height: 'auto', padding: '1rem', border: operatorSide === "AWAY" ? '2px solid var(--nn-cyan)' : '1px solid var(--nn-border)', background: operatorSide === "AWAY" ? 'rgba(0,240,255,0.1)' : 'transparent' }} onClick={() => { setOperatorSide("AWAY"); setRosterChecked(AWAY_PLAYERS.slice(0, 8)); setStarterChecked(AWAY_PLAYERS.slice(0, 5)); }}><b style={{ color: operatorSide === "AWAY" ? '#fff' : 'var(--nn-text-muted)', fontSize: '1.1rem' }}>Misafir Operatörü</b><small style={{ color: 'var(--nn-text-muted)' }}>Süreyi başlatamaz</small></button>
               </div>
-              <h3>{controlledTeamName} takım listesinden maç kadrosunu seç</h3>
-              <p>Takım listesinde <b>{sidePlayers.length}</b> oyuncu olabilir. Maç kadrosu ise <b>{rosterChecked.length}/{matchRosterLimit}</b>. Resmi maçta en fazla 12, özel/hazırlık maçında en fazla 24 oyuncu seçilebilir. En az 5 oyuncu zorunludur.</p>
-              <div className="check-grid">
+              <h3 style={{ color: '#fff' }}>{controlledTeamName} takım listesinden maç kadrosunu seç</h3>
+              <p style={{ color: 'var(--nn-text-muted)', fontSize: '0.9rem' }}>Takım listesinde <b>{sidePlayers.length}</b> oyuncu olabilir. Maç kadrosu ise <b>{rosterChecked.length}/{matchRosterLimit}</b>. Resmi maçta en fazla 12, özel/hazırlık maçında en fazla 24 oyuncu seçilebilir. En az 5 oyuncu zorunludur.</p>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '0.5rem', maxHeight: '300px', overflowY: 'auto', padding: '1rem', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', border: '1px solid var(--nn-border)' }}>
                 {sidePlayers.map((p) => (
-                  <label key={p} className={rosterChecked.includes(p) ? "checked" : ""}>
-                    <input type="checkbox" checked={rosterChecked.includes(p)} onChange={() => toggleRosterPlayer(p)} /> {p}
+                  <label key={p} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', color: rosterChecked.includes(p) ? '#fff' : 'var(--nn-text-muted)', background: rosterChecked.includes(p) ? 'rgba(0,240,255,0.1)' : 'transparent', padding: '0.5rem', borderRadius: '4px' }}>
+                    <input type="checkbox" checked={rosterChecked.includes(p)} onChange={() => toggleRosterPlayer(p)} style={{ accentColor: 'var(--nn-cyan)' }} /> {p}
                   </label>
                 ))}
               </div>
-              <button className="primary" onClick={() => {
+              <button className="nn-button nn-button-primary" style={{ alignSelf: 'flex-start', marginTop: '1rem' }} onClick={() => {
                 if (rosterChecked.length < 5) { setForfeitWarning(`${controlledTeamName} 5 oyuncu bildirmedi. Hükmen yenilgi riski var.`); return; }
                 if (rosterChecked.length > matchRosterLimit) { setForfeitWarning(`Maç kadrosu en fazla ${matchRosterLimit} oyuncu olabilir.`); return; }
                 setForfeitWarning(""); setFlowStep("STARTERS");
-              }}>Kadro Tamam</button>
-              {forfeitWarning && <div className="warning-box">{forfeitWarning}</div>}
+              }}>Kadro Tamam &rarr;</button>
+              {forfeitWarning && <div style={{ color: '#ef4444', marginTop: '1rem' }}>{forfeitWarning}</div>}
             </div>
           )}
 
           {flowStep === "STARTERS" && (
-            <div className="setup-section">
-              <h2>5. İlk 5 Belirle</h2>
-              <p>Seçilen maç kadrosundan sahaya çıkacak tam 5 oyuncu seçilmeli. Şu an: <b>{starterChecked.length}/5</b></p>
-              <div className="check-grid starters">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <h2 style={{ fontSize: '1.5rem', color: '#fff', borderBottom: '1px solid var(--nn-border)', paddingBottom: '0.5rem' }}>5. İlk 5 Belirle</h2>
+              <p style={{ color: 'var(--nn-text-muted)' }}>Seçilen maç kadrosundan sahaya çıkacak tam 5 oyuncu seçilmeli. Şu an: <b style={{ color: starterChecked.length === 5 ? '#22c55e' : 'var(--nn-orange)' }}>{starterChecked.length}/5</b></p>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.5rem', padding: '1rem', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', border: '1px solid var(--nn-border)' }}>
                 {rosterChecked.map((p) => (
-                  <label key={p} className={starterChecked.includes(p) ? "checked" : ""}>
-                    <input type="checkbox" checked={starterChecked.includes(p)} onChange={() => toggleStarter(p)} /> {p}
+                  <label key={p} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', color: starterChecked.includes(p) ? '#fff' : 'var(--nn-text-muted)', background: starterChecked.includes(p) ? 'rgba(255,87,34,0.1)' : 'transparent', padding: '0.5rem', borderRadius: '4px' }}>
+                    <input type="checkbox" checked={starterChecked.includes(p)} onChange={() => toggleStarter(p)} style={{ accentColor: 'var(--nn-orange)' }} /> {p}
                   </label>
                 ))}
               </div>
-              <button className="primary" onClick={confirmStarters}>Maç Ekranına Geç</button>
-              {forfeitWarning && <div className="warning-box">{forfeitWarning}</div>}
+              <button className="nn-button nn-button-success" style={{ alignSelf: 'flex-start', marginTop: '1rem' }} onClick={confirmStarters}>Maç Ekranına Geç &rarr;</button>
+              {forfeitWarning && <div style={{ color: '#ef4444', marginTop: '1rem' }}>{forfeitWarning}</div>}
             </div>
           )}
         </div>
-      </div>
+      </main>
     );
   }
 
