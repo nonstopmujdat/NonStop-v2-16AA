@@ -62,7 +62,7 @@ export default async function MiniAdminPage() {
         <div className="nn-stat-box" style={{borderRight: 'none'}}><span className="nn-stat-label">Statü</span><span className="nn-stat-value" style={{color: '#22c55e', textShadow: '0 0 10px rgba(34, 197, 94, 0.4)'}}>ON</span></div>
       </div>
 
-      <section className="nn-grid nn-grid-cols-2">
+      <section className="nn-grid nn-grid-cols-4">
         <Link className="nn-card" href="/competitions#create-competition">
           <h2>🏆 Lig Yönetimi</h2>
           <p>İl, sezon, kategori, A/B seviyesi ve lig adı seçilerek yeni lig oluşturulur.</p>
