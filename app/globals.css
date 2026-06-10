@@ -845,7 +845,6 @@ body.mini-admin-theme {
 }
 .nn-main-content {
   flex: 1;
-  margin-left: 260px;
   min-height: 100vh;
   display: flex;
   flex-direction: column;

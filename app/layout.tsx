@@ -1,5 +1,5 @@
 import './globals.css';
-import Sidebar from '@/components/Sidebar';
+import BackButton from '@/components/BackButton';
 
 export const metadata = {
   title: 'NONSTOP V2.1',
@@ -11,7 +11,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="tr">
       <body>
         <div className="nn-app-layout">
-          <Sidebar />
+          <BackButton />
           <div className="nn-main-content">
             {children}
           </div>
