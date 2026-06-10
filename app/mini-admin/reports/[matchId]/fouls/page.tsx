@@ -32,9 +32,20 @@ function FoulCourtSvg({ fouls }: { fouls: any[] }) {
       <text x="62" y="138" fontSize="18" fontWeight="900" fill="#991b1b">FAUL / BOYALI ALAN</text>
       <text x="720" y="138" fontSize="18" fontWeight="900" fill="#991b1b">FAUL / BOYALI ALAN</text>
       {fouls.map((f, i) => {
+        let parsed: any = {};
+        try {
+          if (f.notes) parsed = typeof f.notes === 'string' ? JSON.parse(f.notes) : f.notes;
+          if (parsed?.original_payload?.notes) {
+            const inner = typeof parsed.original_payload.notes === 'string' ? JSON.parse(parsed.original_payload.notes) : parsed.original_payload.notes;
+            parsed = { ...inner, ...parsed };
+          }
+        } catch(e) {}
+        const realX = parsed.foul_x ?? f.x ?? f.event_x ?? f.court_x;
+        const realY = parsed.foul_y ?? f.y ?? f.event_y ?? f.court_y;
+
         const fb = fallbackPoint(i);
-        const x = clamp(f.x ?? f.event_x ?? f.court_x, 0, 100, fb.x) * 9.4;
-        const y = clamp(f.y ?? f.event_y ?? f.court_y, 0, 100, fb.y) * 5;
+        const x = clamp(realX, 0, 100, fb.x) * 9.4;
+        const y = clamp(realY, 0, 100, fb.y) * 5;
         return (
           <g key={f.id || i} transform={`translate(${x} ${y})`}>
             <circle r="14" fill="#dc2626" stroke="#7f1d1d" strokeWidth="3" />

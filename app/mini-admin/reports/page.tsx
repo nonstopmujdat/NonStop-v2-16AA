@@ -15,7 +15,7 @@ export default async function MiniAdminReportsPage() {
       <div className="topbar"><b>Mini Admin / PDF Raporlar</b><div><Link href="/mini-admin">Mini Admin</Link></div></div>
       <section className="card">
         <h1>📄 Maç PDF Raporları</h1>
-        <p>Maç istatistik raporu, saha üzeri şut/atış haritası ve faul haritası ayrı ayrı yazdırılabilir. Tarayıcıdan <b>Yazdır → PDF olarak kaydet</b> seç.</p>
+        <p>Maç istatistik raporu, saha üzeri şut/atış haritası ve faul haritası ayrı ayrı yazdırılabilir. Tarayıcıdan <strong>Yazdır → PDF olarak kaydet</strong> seç.</p>
       </section>
       <section className="card" style={{ marginTop: 18 }}>
         <h2>Maçlar</h2>

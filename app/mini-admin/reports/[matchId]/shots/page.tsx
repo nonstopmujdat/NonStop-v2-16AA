@@ -40,8 +40,8 @@ function CourtSvg({ shots }: { shots: any[] }) {
       <text x="775" y="138" fontSize="18" fontWeight="900" fill="#9a3412">BOYALI ALAN</text>
 
       {shots.map((s, i) => {
-        const x = clamp(s.x, 0, 100, 50) * 9.4;
-        const y = clamp(s.y, 0, 100, 50) * 5;
+        const x = clamp(s.realX ?? s.x, 0, 100, 50) * 9.4;
+        const y = clamp(s.realY ?? s.y, 0, 100, 50) * 5;
         const made = Boolean(s.made);
         return (
           <g key={s.id || i} transform={`translate(${x} ${y})`}>
@@ -70,11 +70,25 @@ export default async function ShotMapPdfPage({ params }: { params: { matchId: st
     const supabase = getSupabaseAdmin();
     const matchRes = await supabase.from('operator_match_queue').select('*').eq('match_id', matchId).maybeSingle();
     match = matchRes.data;
-    const eventRes = await supabase.from('match_events').select('id').eq('match_id', matchId);
-    const eventIds = (eventRes.data || []).map((e: any) => e.id);
+    const eventRes = await supabase.from('match_events').select('id, notes').eq('match_id', matchId);
+    const eventsData = eventRes.data || [];
+    const eventIds = eventsData.map((e: any) => e.id);
+    const notesMap = new Map(eventsData.map((e: any) => [e.id, e.notes]));
+    
     if (eventIds.length > 0) {
       const shotRes = await supabase.from('shot_events').select('*').in('match_event_id', eventIds).order('id');
-      shots = shotRes.data || [];
+      shots = (shotRes.data || []).map((s: any) => {
+        let parsed: any = {};
+        try {
+          const raw = notesMap.get(s.match_event_id);
+          if (raw) parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+          if (parsed?.original_payload?.notes) {
+            const inner = typeof parsed.original_payload.notes === 'string' ? JSON.parse(parsed.original_payload.notes) : parsed.original_payload.notes;
+            parsed = { ...inner, ...parsed };
+          }
+        } catch(e) {}
+        return { ...s, realX: parsed.shot_x ?? s.x, realY: parsed.shot_y ?? s.y };
+      });
     }
   }
 
