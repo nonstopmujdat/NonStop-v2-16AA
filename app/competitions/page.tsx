@@ -249,7 +249,7 @@ export default async function CompetitionsPage() {
   const formGrid: React.CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', alignItems: 'end', marginTop: '1rem' };
 
   return (
-    <main className="nn-container">
+    <main className="nn-container" style={{ maxWidth: '1600px' }}>
       <div className="nn-header-area flex justify-between items-center flex-wrap gap-4" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h1 className="nn-title">NONSTOP Organizasyon Yönetimi</h1>
@@ -262,252 +262,274 @@ export default async function CompetitionsPage() {
         </div>
       </div>
 
-      <div style={{ marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-      
-        <section id="create-competition" className="nn-card">
-          <h2 style={{ fontSize: '1.5rem', marginBottom: '0.5rem', color: '#fff' }}>🏆 Lig / Turnuva / Özel Maç Oluştur</h2>
-          <p style={{ color: 'var(--nn-text-muted)', marginBottom: '1rem', fontSize: '0.9rem' }}>Her il kendi bazında çalışır. A ve B ligleri birbirinden bağımsızdır. İsim değişse bile kayıtlar ID ile bağlı kalır.</p>
-          {competitionsRes.error ? <p style={{ color: '#ef4444' }}>Supabase hata: {competitionsRes.error.message}</p> : null}
-          <form action={createCompetition} style={formGrid}>
-            <div className="nn-form-group">
-              <label className="nn-form-label">İl</label>
-              <select name="city_id" required className="nn-select">
-                <option value="">Seç</option>
-                {cities.map((row) => <option key={row.id} value={row.id}>{optionLabel(row, 'İl')}</option>)}
-              </select>
-            </div>
-            <div className="nn-form-group">
-              <label className="nn-form-label">Sezon</label>
-              <select name="season_id" className="nn-select">
-                <option value="">Seçmeden geç</option>
-                {seasons.map((row) => <option key={row.id} value={row.id}>{optionLabel(row, 'Sezon')}</option>)}
-              </select>
-            </div>
-            <div className="nn-form-group">
-              <label className="nn-form-label">Kategori</label>
-              <select name="category_id" className="nn-select">
-                <option value="">Seçmeden geç</option>
-                {categories.map((row) => <option key={row.id} value={row.id}>{categoryLabel(row)}</option>)}
-              </select>
-            </div>
-            <div className="nn-form-group">
-              <label className="nn-form-label">Tip</label>
-              <select name="competition_type" className="nn-select" defaultValue="LEAGUE">
-                <option value="LEAGUE">Lig</option>
-                <option value="SEASON">Sezon</option>
-                <option value="TOURNAMENT">Turnuva</option>
-                <option value="FRIENDLY">Hazırlık Maçı</option>
-                <option value="SPECIAL_MATCH">Özel Maç</option>
-              </select>
-            </div>
-            <div className="nn-form-group">
-              <label className="nn-form-label">A/B Grubu</label>
-              <select name="league_level" className="nn-select" defaultValue="NONE">
-                <option value="NONE">Yok</option>
-                <option value="A">A Ligi</option>
-                <option value="B">B Ligi</option>
-              </select>
-            </div>
-            <div className="nn-form-group">
-              <label className="nn-form-label">Organizasyon Adı</label>
-              <input name="name" required placeholder="Bursa U16 A Ligi" className="nn-input" />
-            </div>
-            <button className="nn-button nn-button-primary" type="submit">Oluştur</button>
-          </form>
-        </section>
+      <div style={{ display: 'flex', gap: '2rem', alignItems: 'flex-start' }}>
+        
+        {/* Main Content Area */}
+        <div style={{ flex: '1', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          
+          <section id="create-competition" className="nn-card">
+            <h2 style={{ fontSize: '1.5rem', marginBottom: '0.5rem', color: '#fff' }}>🏆 Lig / Turnuva / Özel Maç Oluştur</h2>
+            <p style={{ color: 'var(--nn-text-muted)', marginBottom: '1rem', fontSize: '0.9rem' }}>Her il kendi bazında çalışır. A ve B ligleri birbirinden bağımsızdır. İsim değişse bile kayıtlar ID ile bağlı kalır.</p>
+            {competitionsRes.error ? <p style={{ color: '#ef4444' }}>Supabase hata: {competitionsRes.error.message}</p> : null}
+            <form action={createCompetition} style={formGrid}>
+              <div className="nn-form-group">
+                <label className="nn-form-label">İl</label>
+                <select name="city_id" required className="nn-select">
+                  <option value="">Seç</option>
+                  {cities.map((row) => <option key={row.id} value={row.id}>{optionLabel(row, 'İl')}</option>)}
+                </select>
+              </div>
+              <div className="nn-form-group">
+                <label className="nn-form-label">Sezon</label>
+                <select name="season_id" className="nn-select">
+                  <option value="">Seçmeden geç</option>
+                  {seasons.map((row) => <option key={row.id} value={row.id}>{optionLabel(row, 'Sezon')}</option>)}
+                </select>
+              </div>
+              <div className="nn-form-group">
+                <label className="nn-form-label">Kategori</label>
+                <select name="category_id" className="nn-select">
+                  <option value="">Seçmeden geç</option>
+                  {categories.map((row) => <option key={row.id} value={row.id}>{categoryLabel(row)}</option>)}
+                </select>
+              </div>
+              <div className="nn-form-group">
+                <label className="nn-form-label">Tip</label>
+                <select name="competition_type" className="nn-select" defaultValue="LEAGUE">
+                  <option value="LEAGUE">Lig</option>
+                  <option value="SEASON">Sezon</option>
+                  <option value="TOURNAMENT">Turnuva</option>
+                  <option value="FRIENDLY">Hazırlık Maçı</option>
+                  <option value="SPECIAL_MATCH">Özel Maç</option>
+                </select>
+              </div>
+              <div className="nn-form-group">
+                <label className="nn-form-label">A/B Grubu</label>
+                <select name="league_level" className="nn-select" defaultValue="NONE">
+                  <option value="NONE">Yok</option>
+                  <option value="A">A Ligi</option>
+                  <option value="B">B Ligi</option>
+                </select>
+              </div>
+              <div className="nn-form-group">
+                <label className="nn-form-label">Organizasyon Adı</label>
+                <input name="name" required placeholder="Bursa U16 A Ligi" className="nn-input" />
+              </div>
+              <button className="nn-button nn-button-primary" type="submit">Oluştur</button>
+            </form>
+          </section>
 
-        <section className="nn-card">
-          <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem', color: '#fff' }}>✏️ Organizasyon Adı / Durum Değiştir</h2>
-          <form action={updateCompetition} style={formGrid}>
-            <div className="nn-form-group">
-              <label className="nn-form-label">Organizasyon</label>
-              <select name="competition_id" required className="nn-select">
-                <option value="">Seç</option>
-                {rows.map((row) => <option key={row.id} value={row.id}>{row.competition_name} / {row.city_name} / {row.league_level}</option>)}
-              </select>
-            </div>
-            <div className="nn-form-group">
-              <label className="nn-form-label">Yeni Ad</label>
-              <input name="name" required placeholder="Yeni organizasyon adı" className="nn-input" />
-            </div>
-            <div className="nn-form-group">
-              <label className="nn-form-label">Durum</label>
-              <select name="status" className="nn-select" defaultValue="ACTIVE">
-                <option value="ACTIVE">Aktif</option>
-                <option value="COMPLETED">Tamamlandı</option>
-                <option value="CANCELLED">İptal</option>
-                <option value="PASSIVE">Pasif</option>
-              </select>
-            </div>
-            <button className="nn-button nn-button-primary" type="submit">Güncelle</button>
-          </form>
-        </section>
+          <section id="update-competition" className="nn-card">
+            <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem', color: '#fff' }}>✏️ Organizasyon Adı / Durum Değiştir</h2>
+            <form action={updateCompetition} style={formGrid}>
+              <div className="nn-form-group">
+                <label className="nn-form-label">Organizasyon</label>
+                <select name="competition_id" required className="nn-select">
+                  <option value="">Seç</option>
+                  {rows.map((row) => <option key={row.id} value={row.id}>{row.competition_name} / {row.city_name} / {row.league_level}</option>)}
+                </select>
+              </div>
+              <div className="nn-form-group">
+                <label className="nn-form-label">Yeni Ad</label>
+                <input name="name" required placeholder="Yeni organizasyon adı" className="nn-input" />
+              </div>
+              <div className="nn-form-group">
+                <label className="nn-form-label">Durum</label>
+                <select name="status" className="nn-select" defaultValue="ACTIVE">
+                  <option value="ACTIVE">Aktif</option>
+                  <option value="COMPLETED">Tamamlandı</option>
+                  <option value="CANCELLED">İptal</option>
+                  <option value="PASSIVE">Pasif</option>
+                </select>
+              </div>
+              <button className="nn-button nn-button-primary" type="submit">Güncelle</button>
+            </form>
+          </section>
 
-        <section id="add-team" className="nn-card">
-          <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem', color: '#fff' }}>👥 Organizasyona Takım Ekle</h2>
-          <form action={addTeamToCompetition} style={formGrid}>
-            <div className="nn-form-group">
-              <label className="nn-form-label">Organizasyon</label>
-              <select name="competition_id" required className="nn-select">
-                <option value="">Seç</option>
-                {rows.map((row) => <option key={row.id} value={row.id}>{row.competition_name} / {row.city_name} / {row.league_level}</option>)}
-              </select>
-            </div>
-            <div className="nn-form-group">
-              <label className="nn-form-label">Takım</label>
-              <select name="team_id" required className="nn-select">
-                <option value="">Seç</option>
-                {teams.map((row) => <option key={row.id} value={row.id}>{optionLabel(row, 'Takım')}</option>)}
-              </select>
-            </div>
-            <div className="nn-form-group">
-              <label className="nn-form-label">Kulüp</label>
-              <select name="club_id" className="nn-select">
-                <option value="">Seçmeden geç</option>
-                {clubs.map((row) => <option key={row.id} value={row.id}>{optionLabel(row, 'Kulüp')}</option>)}
-              </select>
-            </div>
-            <button className="nn-button nn-button-success" type="submit">Takım Ekle</button>
-          </form>
-        </section>
+          <section id="add-team" className="nn-card">
+            <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem', color: '#fff' }}>👥 Organizasyona Takım Ekle</h2>
+            <form action={addTeamToCompetition} style={formGrid}>
+              <div className="nn-form-group">
+                <label className="nn-form-label">Organizasyon</label>
+                <select name="competition_id" required className="nn-select">
+                  <option value="">Seç</option>
+                  {rows.map((row) => <option key={row.id} value={row.id}>{row.competition_name} / {row.city_name} / {row.league_level}</option>)}
+                </select>
+              </div>
+              <div className="nn-form-group">
+                <label className="nn-form-label">Takım</label>
+                <select name="team_id" required className="nn-select">
+                  <option value="">Seç</option>
+                  {teams.map((row) => <option key={row.id} value={row.id}>{optionLabel(row, 'Takım')}</option>)}
+                </select>
+              </div>
+              <div className="nn-form-group">
+                <label className="nn-form-label">Kulüp</label>
+                <select name="club_id" className="nn-select">
+                  <option value="">Seçmeden geç</option>
+                  {clubs.map((row) => <option key={row.id} value={row.id}>{optionLabel(row, 'Kulüp')}</option>)}
+                </select>
+              </div>
+              <button className="nn-button nn-button-success" type="submit">Takım Ekle</button>
+            </form>
+          </section>
 
-        <section id="create-match" className="nn-card">
-          <h2 style={{ fontSize: '1.5rem', marginBottom: '0.5rem', color: '#fff' }}>📅 Resmi / Turnuva Maçı Oluştur</h2>
-          <p style={{ color: 'var(--nn-text-muted)', marginBottom: '1rem', fontSize: '0.9rem' }}>Buradan oluşturulan maçlar aynı gün ve salonda operatör ekranına otomatik düşer. Resmi ve turnuva maçları 12 kişilik kadro kullanır.</p>
-          {matchesRes.error ? <p style={{ color: '#ef4444' }}>Maç listesi hata: {matchesRes.error.message}</p> : null}
-          <form action={createOfficialMatch} style={formGrid}>
-            <div className="nn-form-group">
-              <label className="nn-form-label">Organizasyon</label>
-              <select name="competition_id" required className="nn-select">
-                <option value="">Seç</option>
-                {officialCompetitions.map((row) => <option key={row.id} value={row.id}>{row.competition_name} / {row.city_name} / {row.league_level}</option>)}
-              </select>
-            </div>
-            <div className="nn-form-group">
-              <label className="nn-form-label">Salon</label>
-              <select name="venue_id" required className="nn-select">
-                <option value="">Seç</option>
-                {venues.map((row) => <option key={row.id} value={row.id}>{optionLabel(row, 'Salon')}</option>)}
-              </select>
-            </div>
-            <div className="nn-form-group">
-              <label className="nn-form-label">Tarih</label>
-              <input name="match_date" required type="date" className="nn-input" />
-            </div>
-            <div className="nn-form-group">
-              <label className="nn-form-label">Saat</label>
-              <input name="match_time" required type="time" className="nn-input" />
-            </div>
-            <div className="nn-form-group">
-              <label className="nn-form-label">Ev Sahibi</label>
-              <select name="home_team_id" required className="nn-select">
-                <option value="">Seç</option>
-                {teams.map((row) => <option key={row.id} value={row.id}>{optionLabel(row, 'Takım')}</option>)}
-              </select>
-            </div>
-            <div className="nn-form-group">
-              <label className="nn-form-label">Misafir</label>
-              <select name="away_team_id" required className="nn-select">
-                <option value="">Seç</option>
-                {teams.map((row) => <option key={row.id} value={row.id}>{optionLabel(row, 'Takım')}</option>)}
-              </select>
-            </div>
-            <button className="nn-button" style={{ background: '#7c3aed', borderColor: '#6d28d9', color: 'white' }} type="submit">Maçı Oluştur</button>
-          </form>
-        </section>
+          <section id="create-match" className="nn-card">
+            <h2 style={{ fontSize: '1.5rem', marginBottom: '0.5rem', color: '#fff' }}>📅 Resmi / Turnuva Maçı Oluştur</h2>
+            <p style={{ color: 'var(--nn-text-muted)', marginBottom: '1rem', fontSize: '0.9rem' }}>Buradan oluşturulan maçlar aynı gün ve salonda operatör ekranına otomatik düşer. Resmi ve turnuva maçları 12 kişilik kadro kullanır.</p>
+            {matchesRes.error ? <p style={{ color: '#ef4444' }}>Maç listesi hata: {matchesRes.error.message}</p> : null}
+            <form action={createOfficialMatch} style={formGrid}>
+              <div className="nn-form-group">
+                <label className="nn-form-label">Organizasyon</label>
+                <select name="competition_id" required className="nn-select">
+                  <option value="">Seç</option>
+                  {officialCompetitions.map((row) => <option key={row.id} value={row.id}>{row.competition_name} / {row.city_name} / {row.league_level}</option>)}
+                </select>
+              </div>
+              <div className="nn-form-group">
+                <label className="nn-form-label">Salon</label>
+                <select name="venue_id" required className="nn-select">
+                  <option value="">Seç</option>
+                  {venues.map((row) => <option key={row.id} value={row.id}>{optionLabel(row, 'Salon')}</option>)}
+                </select>
+              </div>
+              <div className="nn-form-group">
+                <label className="nn-form-label">Tarih</label>
+                <input name="match_date" required type="date" className="nn-input" />
+              </div>
+              <div className="nn-form-group">
+                <label className="nn-form-label">Saat</label>
+                <input name="match_time" required type="time" className="nn-input" />
+              </div>
+              <div className="nn-form-group">
+                <label className="nn-form-label">Ev Sahibi</label>
+                <select name="home_team_id" required className="nn-select">
+                  <option value="">Seç</option>
+                  {teams.map((row) => <option key={row.id} value={row.id}>{optionLabel(row, 'Takım')}</option>)}
+                </select>
+              </div>
+              <div className="nn-form-group">
+                <label className="nn-form-label">Misafir</label>
+                <select name="away_team_id" required className="nn-select">
+                  <option value="">Seç</option>
+                  {teams.map((row) => <option key={row.id} value={row.id}>{optionLabel(row, 'Takım')}</option>)}
+                </select>
+              </div>
+              <button className="nn-button" style={{ background: '#7c3aed', borderColor: '#6d28d9', color: 'white' }} type="submit">Maçı Oluştur</button>
+            </form>
+          </section>
 
-        <section className="nn-card">
-          <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem', color: '#fff' }}>📋 Organizasyon Listesi</h2>
-          {!competitionsRes.error && rows.length === 0 ? <p style={{ color: 'var(--nn-text-muted)' }}>Henüz organizasyon kaydı yok.</p> : null}
-          <div className="nn-table-wrapper">
-            <table className="nn-table">
-              <thead>
-                <tr>
-                  <th>İl</th><th>Sezon</th><th>Kategori</th><th>Organizasyon</th><th>Tip</th><th>Lig</th><th>Takım</th><th>Durum</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row) => (
-                  <tr key={row.id}>
-                    <td>{row.city_name || '-'}</td>
-                    <td>{row.season_name || '-'}</td>
-                    <td>{row.category_name || '-'} {row.gender ? `/${row.gender}` : ''}</td>
-                    <td><b style={{ color: 'var(--nn-cyan)' }}>{row.competition_name || '-'}</b></td>
-                    <td>{typeLabel(row.competition_type)}</td>
-                    <td>{row.league_level || 'NONE'}</td>
-                    <td>{row.team_count ?? 0}</td>
-                    <td>
-                      <span style={{ 
-                        color: row.status === 'ACTIVE' ? '#22c55e' : 'var(--nn-text-muted)',
-                        background: row.status === 'ACTIVE' ? 'rgba(34, 197, 94, 0.1)' : 'transparent',
-                        padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem'
-                      }}>
-                        {row.status || '-'}
-                      </span>
-                    </td>
+          <section id="list-competitions" className="nn-card">
+            <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem', color: '#fff' }}>📋 Organizasyon Listesi</h2>
+            {!competitionsRes.error && rows.length === 0 ? <p style={{ color: 'var(--nn-text-muted)' }}>Henüz organizasyon kaydı yok.</p> : null}
+            <div className="nn-table-wrapper">
+              <table className="nn-table">
+                <thead>
+                  <tr>
+                    <th>İl</th><th>Sezon</th><th>Kategori</th><th>Organizasyon</th><th>Tip</th><th>Lig</th><th>Takım</th><th>Durum</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
+                </thead>
+                <tbody>
+                  {rows.map((row) => (
+                    <tr key={row.id}>
+                      <td>{row.city_name || '-'}</td>
+                      <td>{row.season_name || '-'}</td>
+                      <td>{row.category_name || '-'} {row.gender ? `/${row.gender}` : ''}</td>
+                      <td><b style={{ color: 'var(--nn-cyan)' }}>{row.competition_name || '-'}</b></td>
+                      <td>{typeLabel(row.competition_type)}</td>
+                      <td>{row.league_level || 'NONE'}</td>
+                      <td>{row.team_count ?? 0}</td>
+                      <td>
+                        <span style={{ 
+                          color: row.status === 'ACTIVE' ? '#22c55e' : 'var(--nn-text-muted)',
+                          background: row.status === 'ACTIVE' ? 'rgba(34, 197, 94, 0.1)' : 'transparent',
+                          padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem'
+                        }}>
+                          {row.status || '-'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
 
-        <section id="matches" className="nn-card">
-          <h2 style={{ fontSize: '1.5rem', marginBottom: '0.5rem', color: '#fff' }}>🕒 Oluşturulan Maçlar</h2>
-          <p style={{ color: 'var(--nn-text-muted)', marginBottom: '1rem', fontSize: '0.9rem' }}>Bu listedeki maçlar operatör ekranında İl → Salon → Bugünkü Maçlar akışında görünür.</p>
-          <div className="nn-table-wrapper">
-            <table className="nn-table">
-              <thead>
-                <tr><th>Tarih</th><th>Saat</th><th>İl</th><th>Salon</th><th>Organizasyon</th><th>Maç</th><th>Tip</th><th>Durum</th></tr>
-              </thead>
-              <tbody>
-                {matchRows.map((row) => (
-                  <tr key={row.match_id}>
-                    <td>{row.match_date || '-'}</td>
-                    <td>{row.match_time || '-'}</td>
-                    <td>{row.city_name || '-'}</td>
-                    <td>{row.venue_name || '-'}</td>
-                    <td>{row.competition_name || '-'}</td>
-                    <td><b style={{ color: '#fff' }}>{row.home_team_name || '-'} <span style={{ color: 'var(--nn-orange)' }}>-</span> {row.away_team_name || '-'}</b></td>
-                    <td>{typeLabel(row.competition_type)}</td>
-                    <td>{row.status || '-'}</td>
-                  </tr>
-                ))}
-                {matchRows.length === 0 ? <tr><td colSpan={8} style={{ textAlign: 'center', color: 'var(--nn-text-muted)' }}>Henüz maç oluşturulmadı.</td></tr> : null}
-              </tbody>
-            </table>
-          </div>
-        </section>
+          <section id="matches" className="nn-card">
+            <h2 style={{ fontSize: '1.5rem', marginBottom: '0.5rem', color: '#fff' }}>🕒 Oluşturulan Maçlar</h2>
+            <p style={{ color: 'var(--nn-text-muted)', marginBottom: '1rem', fontSize: '0.9rem' }}>Bu listedeki maçlar operatör ekranında İl → Salon → Bugünkü Maçlar akışında görünür.</p>
+            <div className="nn-table-wrapper">
+              <table className="nn-table">
+                <thead>
+                  <tr><th>Tarih</th><th>Saat</th><th>İl</th><th>Salon</th><th>Organizasyon</th><th>Maç</th><th>Tip</th><th>Durum</th></tr>
+                </thead>
+                <tbody>
+                  {matchRows.map((row) => (
+                    <tr key={row.match_id}>
+                      <td>{row.match_date || '-'}</td>
+                      <td>{row.match_time || '-'}</td>
+                      <td>{row.city_name || '-'}</td>
+                      <td>{row.venue_name || '-'}</td>
+                      <td>{row.competition_name || '-'}</td>
+                      <td><b style={{ color: '#fff' }}>{row.home_team_name || '-'} <span style={{ color: 'var(--nn-orange)' }}>-</span> {row.away_team_name || '-'}</b></td>
+                      <td>{typeLabel(row.competition_type)}</td>
+                      <td>{row.status || '-'}</td>
+                    </tr>
+                  ))}
+                  {matchRows.length === 0 ? <tr><td colSpan={8} style={{ textAlign: 'center', color: 'var(--nn-text-muted)' }}>Henüz maç oluşturulmadı.</td></tr> : null}
+                </tbody>
+              </table>
+            </div>
+          </section>
 
-        <section id="teams" className="nn-card">
-          <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem', color: '#fff' }}>🏀 Eklenen Takımlar</h2>
-          <div className="nn-table-wrapper">
-            <table className="nn-table">
-              <thead>
-                <tr><th>Organizasyon</th><th>İl</th><th>Kategori</th><th>Takım</th><th>Kulüp</th><th>Lig</th><th>İşlem</th></tr>
-              </thead>
-              <tbody>
-                {compTeams.map((row) => (
-                  <tr key={row.id}>
-                    <td>{row.competition_name || '-'}</td>
-                    <td>{row.city_name || '-'}</td>
-                    <td>{row.category_name || '-'}</td>
-                    <td><b style={{ color: '#fff' }}>{row.team_name || '-'}</b></td>
-                    <td>{row.club_name || '-'}</td>
-                    <td>{row.league_level || 'NONE'}</td>
-                    <td>
-                      <form action={removeTeamFromCompetition}>
-                        <input type="hidden" name="competition_team_id" value={row.id} />
-                        <button className="nn-button nn-button-danger" style={{ padding: '6px 12px', fontSize: '0.8rem' }} type="submit">Pasifleştir</button>
-                      </form>
-                    </td>
-                  </tr>
-                ))}
-                {compTeams.length === 0 ? <tr><td colSpan={7} style={{ textAlign: 'center', color: 'var(--nn-text-muted)' }}>Henüz takım eklenmedi.</td></tr> : null}
-              </tbody>
-            </table>
+          <section id="teams" className="nn-card">
+            <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem', color: '#fff' }}>🏀 Eklenen Takımlar</h2>
+            <div className="nn-table-wrapper">
+              <table className="nn-table">
+                <thead>
+                  <tr><th>Organizasyon</th><th>İl</th><th>Kategori</th><th>Takım</th><th>Kulüp</th><th>Lig</th><th>İşlem</th></tr>
+                </thead>
+                <tbody>
+                  {compTeams.map((row) => (
+                    <tr key={row.id}>
+                      <td>{row.competition_name || '-'}</td>
+                      <td>{row.city_name || '-'}</td>
+                      <td>{row.category_name || '-'}</td>
+                      <td><b style={{ color: '#fff' }}>{row.team_name || '-'}</b></td>
+                      <td>{row.club_name || '-'}</td>
+                      <td>{row.league_level || 'NONE'}</td>
+                      <td>
+                        <form action={removeTeamFromCompetition}>
+                          <input type="hidden" name="competition_team_id" value={row.id} />
+                          <button className="nn-button nn-button-danger" style={{ padding: '6px 12px', fontSize: '0.8rem' }} type="submit">Pasifleştir</button>
+                        </form>
+                      </td>
+                    </tr>
+                  ))}
+                  {compTeams.length === 0 ? <tr><td colSpan={7} style={{ textAlign: 'center', color: 'var(--nn-text-muted)' }}>Henüz takım eklenmedi.</td></tr> : null}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+        </div>
+
+        {/* Right Sticky Sidebar */}
+        <aside style={{ width: '320px', flexShrink: '0', position: 'sticky', top: '2rem' }}>
+          <div className="nn-card">
+            <h3 style={{ fontSize: '1.25rem', marginBottom: '1rem', borderBottom: '1px solid var(--nn-border)', paddingBottom: '0.5rem' }}>Hızlı Menü</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <Link href="#create-competition" className="nn-button" style={{ textAlign: 'left', background: 'transparent' }}>🏆 Lig Oluştur</Link>
+              <Link href="#update-competition" className="nn-button" style={{ textAlign: 'left', background: 'transparent' }}>✏️ Durum Değiştir</Link>
+              <Link href="#add-team" className="nn-button" style={{ textAlign: 'left', background: 'transparent' }}>👥 Takım Ekle</Link>
+              <Link href="#create-match" className="nn-button" style={{ textAlign: 'left', background: 'transparent' }}>📅 Maç Oluştur</Link>
+              <Link href="#list-competitions" className="nn-button" style={{ textAlign: 'left', background: 'transparent' }}>📋 Lig Listesi</Link>
+              <Link href="#matches" className="nn-button" style={{ textAlign: 'left', background: 'transparent' }}>🕒 Oluşturulan Maçlar</Link>
+              <Link href="#teams" className="nn-button" style={{ textAlign: 'left', background: 'transparent' }}>🏀 Eklenen Takımlar</Link>
+            </div>
           </div>
-        </section>
+        </aside>
+
       </div>
     </main>
   );
