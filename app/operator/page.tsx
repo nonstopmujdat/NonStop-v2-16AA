@@ -48,6 +48,12 @@ type DemoMatch = {
   homeTeamId?: number | null;
   awayTeamId?: number | null;
 };
+type PlayerOption = {
+  id: number;
+  label: string;
+  jersey_no: number | null;
+  team_id: number;
+};
 const DEMO_CITIES = ["Bursa", "İstanbul", "İzmir", "Ankara", "Kocaeli"];
 const DEMO_VENUES: DemoVenue[] = [
   { id: 1, city: "Bursa", name: "Nilüfer Spor Salonu" },
@@ -84,6 +90,8 @@ export default function OperatorPage() {
   const [adminCities, setAdminCities] = useState<string[]>([]);
   const [adminVenues, setAdminVenues] = useState<DemoVenue[]>([]);
   const [adminMatches, setAdminMatches] = useState<DemoMatch[]>([]);
+  const [homePlayers, setHomePlayers] = useState<PlayerOption[]>([]);
+  const [awayPlayers, setAwayPlayers] = useState<PlayerOption[]>([]);
   const [queueInfo, setQueueInfo] = useState("Demo maç listesi açık.");
   const cityOptions = adminCities.length ? adminCities : DEMO_CITIES;
   const allVenuesForSelect = adminVenues.length ? adminVenues : DEMO_VENUES;
@@ -95,8 +103,8 @@ export default function OperatorPage() {
   const [specialCountsForSeason, setSpecialCountsForSeason] = useState(false);
   const [activeMatch, setActiveMatch] = useState<DemoMatch | null>(null);
   const [operatorSide, setOperatorSide] = useState<OperatorSide>("HOME");
-  const [rosterChecked, setRosterChecked] = useState<string[]>(HOME_PLAYERS.slice(0, 8));
-  const [starterChecked, setStarterChecked] = useState<string[]>(HOME_PLAYERS.slice(0, 5));
+  const [rosterChecked, setRosterChecked] = useState<string[]>([]);
+  const [starterChecked, setStarterChecked] = useState<string[]>([]);
   const [forfeitWarning, setForfeitWarning] = useState("");
   const [homeScore, setHomeScore] = useState(0);
   const [awayScore, setAwayScore] = useState(0);
@@ -108,7 +116,7 @@ export default function OperatorPage() {
     "live" | "finished_pending" | "finished"
   >("live");
   const [timer, setTimer] = useState<any>(null);
-  const [selectedPlayer, setSelectedPlayer] = useState("#7 Burak");
+  const [selectedPlayer, setSelectedPlayer] = useState("");
   const [playerFouls, setPlayerFouls] = useState<Record<string, number>>({});
   const [fouledOutPlayers, setFouledOutPlayers] = useState<string[]>([]);
   const [mustSubPlayer, setMustSubPlayer] = useState<string | null>(null);
@@ -118,22 +126,8 @@ export default function OperatorPage() {
   const [pendingFoul, setPendingFoul] = useState<string | null>(null);
   const [subOut, setSubOut] = useState<string | null>(null);
   const [online, setOnline] = useState(true);
-  const [onCourt, setOnCourt] = useState([
-    "#7 Burak",
-    "#4 Ahmet",
-    "#5 Mehmet",
-    "#6 Ali",
-    "#8 Kerem",
-  ]);
-  const [bench, setBench] = useState([
-    "#9 Ege",
-    "#10 Okan",
-    "#11 Mert",
-    "#12 Can",
-    "#13 Tuna",
-    "#14 Emir",
-    "#15 Arda",
-  ]);
+  const [onCourt, setOnCourt] = useState<string[]>([]);
+  const [bench, setBench] = useState<string[]>([]);
   const [courtTab, setCourtTab] = useState<CourtTab>("court");
   const clickTimer = useRef<any>(null);
   const clickPoints = useRef<1 | 2 | 3 | null>(null);
@@ -206,7 +200,7 @@ export default function OperatorPage() {
         headers: { "Content-Type": "application/json" },
         cache: "no-store",
         body: JSON.stringify({
-          match_id: 1,
+          match_id: activeMatch?.id ?? 1,
           current_quarter: override?.quarter ?? quarter,
           clock_seconds: override?.seconds ?? seconds,
           home_score: override?.homeScore ?? homeScore,
@@ -306,38 +300,25 @@ export default function OperatorPage() {
     return () => clearTimeout(finishTimer);
   }, [seconds]);
 
-  function getDemoPlayerId(player: string) {
-    const match = String(player || "").match(/#(\d+)/);
-    if (!match) return null;
-    const jersey = Number(match[1]);
-
-    // Demo veritabanındaki ilk oyuncular eski sıralamayla oluşturulduğu için
-    // #4-#15 arası özel eşleştirmeyi koruyoruz.
-    const map: Record<number, number> = {
-      7: 1,
-      4: 2,
-      5: 3,
-      6: 4,
-      8: 5,
-      9: 6,
-      10: 7,
-      11: 8,
-      12: 9,
-      13: 10,
-      14: 11,
-      15: 12,
-    };
-
-    if (map[jersey]) return map[jersey];
-
-    // Yeni eklenen/demo listedeki #16, #17, #18... gibi oyuncuların
-    // seçili olmasına rağmen player_id bulunamaması sorununu çözer.
-    // #16 -> 13, #17 -> 14 ... şeklinde devam eder.
-    if (jersey >= 16 && jersey <= 99) return jersey - 3;
-
-    return null;
+  function getPlayerId(player: string) {
+    const allPlayers = [...homePlayers, ...awayPlayers];
+    return allPlayers.find((p) => p.label === player)?.id ?? null;
   }
 
+  function getSidePlayerLabels(side: OperatorSide = operatorSide) {
+    const list = side === "HOME" ? homePlayers : awayPlayers;
+    return list.map((p) => p.label);
+  }
+
+  function resetRosterForSide(side: OperatorSide) {
+    const labels = getSidePlayerLabels(side);
+    const initialRoster = labels.slice(0, Math.min(8, matchRosterLimit));
+    const initialStarters = labels.slice(0, 5);
+    setRosterChecked(initialRoster);
+    setStarterChecked(initialStarters);
+    setSelectedPlayer(initialStarters[0] || initialRoster[0] || "");
+    setForfeitWarning(labels.length ? "" : "Bu takım için oyuncu bulunamadı. Mini Admin / Veri Yönetimi ekranından oyuncu ekleyin.");
+  }
 
   function getControlledTeamId() {
     if (!activeMatch) return operatorSide === "HOME" ? 1 : 2;
@@ -369,7 +350,7 @@ export default function OperatorPage() {
     const dbType = normalizeEventTypeForDb(eventType);
     if (!statRequiresPlayer(dbType)) return true;
 
-    const playerId = payload.player_id ?? getDemoPlayerId(player);
+    const playerId = payload.player_id ?? getPlayerId(player);
     if (!player || player === "YOK" || player === "PENDING" || !playerId) {
       log(`SİSTEM: ${dbType} kaydedilemedi. Önce geçerli oyuncu seçiniz.`);
       return false;
@@ -399,7 +380,7 @@ export default function OperatorPage() {
       roster_type: isSpecialOrFriendly ? "SPECIAL_MATCH" : isTournamentMatch ? "TOURNAMENT" : "OFFICIAL",
       is_special_match: isSpecialOrFriendly,
       players: rosterChecked.map((player) => ({
-        player_id: getDemoPlayerId(player),
+        player_id: getPlayerId(player),
         player_label: player,
         jersey_no: Number(player.match(/#(\d+)/)?.[1] || 0) || null,
         is_starter: nextStarters.includes(player),
@@ -430,8 +411,8 @@ export default function OperatorPage() {
     const payload = {
       match_id: activeMatch.id,
       team_id: getControlledTeamId(),
-      player_out_id: getDemoPlayerId(playerOut),
-      player_in_id: getDemoPlayerId(playerIn),
+      player_out_id: getPlayerId(playerOut),
+      player_in_id: getPlayerId(playerIn),
       player_out_label: playerOut,
       player_in_label: playerIn,
       quarter,
@@ -499,7 +480,7 @@ export default function OperatorPage() {
     payload: Record<string, any> = {},
   ) {
     const dbType = normalizeEventTypeForDb(type);
-    const playerId = payload.player_id ?? getDemoPlayerId(player);
+    const playerId = payload.player_id ?? getPlayerId(player);
 
     if (!validatePlayerForStat(dbType, player, { ...payload, player_id: playerId })) {
       return;
@@ -552,7 +533,7 @@ export default function OperatorPage() {
         related_player_id:
           payload.related_player_id ??
           (payload.related_player
-            ? getDemoPlayerId(payload.related_player)
+            ? getPlayerId(payload.related_player)
             : null),
         quarter: Number(payload.quarter ?? quarter ?? 1),
         game_clock: payload.game_clock || fmt(seconds) || "10:00",
@@ -753,7 +734,7 @@ export default function OperatorPage() {
       addQueue("AST", context.assist, {
         linked_basket_id: context.linked_basket_id,
         assist: context.assist,
-        related_player_id: getDemoPlayerId(context.player),
+        related_player_id: getPlayerId(context.player),
       });
       log(`${fmt(seconds)} ${context.assist} AST`);
     }
@@ -887,7 +868,7 @@ export default function OperatorPage() {
       team_id: getControlledTeamId(),
       player_out: playerOut,
       player_in: playerIn,
-      related_player_id: getDemoPlayerId(playerIn),
+      related_player_id: getPlayerId(playerIn),
     });
     saveSubstitutionToDb(playerOut, playerIn);
     log(`${fmt(seconds)} DEĞİŞİKLİK: ${playerOut} OUT / ${playerIn} IN`);
@@ -942,6 +923,42 @@ export default function OperatorPage() {
     return () => { cancelled = true; };
   }, [selectedCity, selectedVenue]);
 
+  useEffect(() => {
+    let cancelled = false;
+    async function loadMatchPlayers() {
+      if (!activeMatch?.homeTeamId || !activeMatch?.awayTeamId) return;
+      try {
+        const params = new URLSearchParams({
+          home_team_id: String(activeMatch.homeTeamId),
+          away_team_id: String(activeMatch.awayTeamId),
+        });
+        const res = await fetch(`/api/operator-team-players?${params.toString()}`, { cache: "no-store" });
+        const json = await res.json().catch(() => null);
+        if (cancelled || !json?.ok) {
+          if (!cancelled) log(`SİSTEM: oyuncular alınamadı ${String(json?.error || res.statusText).slice(0, 100)}`);
+          return;
+        }
+        const nextHome = (json.homePlayers || []) as PlayerOption[];
+        const nextAway = (json.awayPlayers || []) as PlayerOption[];
+        setHomePlayers(nextHome);
+        setAwayPlayers(nextAway);
+      } catch (err: any) {
+        if (!cancelled) log(`SİSTEM: oyuncu API hatası ${String(err?.message || err).slice(0, 100)}`);
+      }
+    }
+    loadMatchPlayers();
+    return () => { cancelled = true; };
+  }, [activeMatch?.id, activeMatch?.homeTeamId, activeMatch?.awayTeamId]);
+
+  useEffect(() => {
+    if (!activeMatch) return;
+    const labels = getSidePlayerLabels(operatorSide);
+    if (!labels.length) return;
+    setRosterChecked(labels.slice(0, Math.min(8, matchRosterLimit)));
+    setStarterChecked(labels.slice(0, 5));
+    setSelectedPlayer(labels[0] || "");
+  }, [activeMatch?.id, operatorSide, homePlayers.length, awayPlayers.length]);
+
   function toggleRosterPlayer(player: string) {
     setRosterChecked((prev) => {
       if (prev.includes(player)) {
@@ -977,8 +994,8 @@ export default function OperatorPage() {
       venue: selectedVenue,
       home,
       away,
-      homeTeamId: 1,
-      awayTeamId: 2,
+      homeTeamId: null,
+      awayTeamId: null,
       category: "SERBEST",
       competition: specialMatchName.trim() || (operatorMatchType === "TOURNAMENT" ? "Turnuva Maçı" : "Özel / Hazırlık Maçı"),
       competitionType: operatorMatchType,
@@ -987,9 +1004,9 @@ export default function OperatorPage() {
     };
     setActiveMatch(specialMatch);
     setOperatorSide("HOME");
-    const initialLimit = operatorMatchType === "FRIENDLY" || operatorMatchType === "SPECIAL_MATCH" ? SPECIAL_MATCH_ROSTER_LIMIT : OFFICIAL_MATCH_ROSTER_LIMIT;
-    setRosterChecked(HOME_PLAYERS.slice(0, Math.min(8, initialLimit)));
-    setStarterChecked(HOME_PLAYERS.slice(0, 5));
+    setRosterChecked([]);
+    setStarterChecked([]);
+    setSelectedPlayer("");
     setForfeitWarning("");
     setFlowStep("ROSTER");
   }
@@ -1008,7 +1025,7 @@ export default function OperatorPage() {
   }
 
   if (flowStep !== "GAME") {
-    const sidePlayers = operatorSide === "HOME" ? HOME_PLAYERS : AWAY_PLAYERS;
+    const sidePlayers = getSidePlayerLabels(operatorSide);
     return (
       <main className="nn-container" style={{ maxWidth: '800px', display: 'flex', flexDirection: 'column', gap: '1.5rem', marginTop: '2rem' }}>
         <div className="nn-header-area">
@@ -1061,7 +1078,7 @@ export default function OperatorPage() {
               
               <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1rem', marginTop: '1rem' }}>
                 {todaysVenueMatches.map((m, index) => (
-                  <button key={m.id} className="nn-button" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', padding: '1rem', height: 'auto', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--nn-border)' }} onClick={() => { setActiveMatch(m); setFlowStep("ROSTER"); }}>
+                  <button key={m.id} className="nn-button" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', padding: '1rem', height: 'auto', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--nn-border)' }} onClick={() => { setActiveMatch(m); setRosterChecked([]); setStarterChecked([]); setSelectedPlayer(""); setFlowStep("ROSTER"); }}>
                     <b style={{ color: 'var(--nn-cyan)', marginBottom: '0.25rem' }}>{index + 1}. Maç • {m.time}</b>
                     <span style={{ fontSize: '1.1rem', color: '#fff', marginBottom: '0.25rem' }}>{m.home} - {m.away}</span>
                     <small style={{ color: 'var(--nn-text-muted)' }}>{m.competition}</small>
@@ -1107,8 +1124,8 @@ export default function OperatorPage() {
                 </div>
               ) : null}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', margin: '1rem 0' }}>
-                <button className="nn-button" style={{ display: 'flex', flexDirection: 'column', height: 'auto', padding: '1rem', border: operatorSide === "HOME" ? '2px solid var(--nn-cyan)' : '1px solid var(--nn-border)', background: operatorSide === "HOME" ? 'rgba(0,240,255,0.1)' : 'transparent' }} onClick={() => { setOperatorSide("HOME"); setRosterChecked(HOME_PLAYERS.slice(0, 8)); setStarterChecked(HOME_PLAYERS.slice(0, 5)); }}><b style={{ color: operatorSide === "HOME" ? '#fff' : 'var(--nn-text-muted)', fontSize: '1.1rem' }}>Ev Sahibi Operatörü</b><small style={{ color: 'var(--nn-text-muted)' }}>Süreyi başlatabilir</small></button>
-                <button className="nn-button" style={{ display: 'flex', flexDirection: 'column', height: 'auto', padding: '1rem', border: operatorSide === "AWAY" ? '2px solid var(--nn-cyan)' : '1px solid var(--nn-border)', background: operatorSide === "AWAY" ? 'rgba(0,240,255,0.1)' : 'transparent' }} onClick={() => { setOperatorSide("AWAY"); setRosterChecked(AWAY_PLAYERS.slice(0, 8)); setStarterChecked(AWAY_PLAYERS.slice(0, 5)); }}><b style={{ color: operatorSide === "AWAY" ? '#fff' : 'var(--nn-text-muted)', fontSize: '1.1rem' }}>Misafir Operatörü</b><small style={{ color: 'var(--nn-text-muted)' }}>Süreyi başlatamaz</small></button>
+                <button className="nn-button" style={{ display: 'flex', flexDirection: 'column', height: 'auto', padding: '1rem', border: operatorSide === "HOME" ? '2px solid var(--nn-cyan)' : '1px solid var(--nn-border)', background: operatorSide === "HOME" ? 'rgba(0,240,255,0.1)' : 'transparent' }} onClick={() => { setOperatorSide("HOME"); setTimeout(() => resetRosterForSide("HOME"), 0); }}><b style={{ color: operatorSide === "HOME" ? '#fff' : 'var(--nn-text-muted)', fontSize: '1.1rem' }}>Ev Sahibi Operatörü</b><small style={{ color: 'var(--nn-text-muted)' }}>Süreyi başlatabilir</small></button>
+                <button className="nn-button" style={{ display: 'flex', flexDirection: 'column', height: 'auto', padding: '1rem', border: operatorSide === "AWAY" ? '2px solid var(--nn-cyan)' : '1px solid var(--nn-border)', background: operatorSide === "AWAY" ? 'rgba(0,240,255,0.1)' : 'transparent' }} onClick={() => { setOperatorSide("AWAY"); setTimeout(() => resetRosterForSide("AWAY"), 0); }}><b style={{ color: operatorSide === "AWAY" ? '#fff' : 'var(--nn-text-muted)', fontSize: '1.1rem' }}>Misafir Operatörü</b><small style={{ color: 'var(--nn-text-muted)' }}>Süreyi başlatamaz</small></button>
               </div>
               <h3 style={{ color: '#fff' }}>{controlledTeamName} takım listesinden maç kadrosunu seç</h3>
               <p style={{ color: 'var(--nn-text-muted)', fontSize: '0.9rem' }}>Takım listesinde <b>{sidePlayers.length}</b> oyuncu olabilir. Maç kadrosu ise <b>{rosterChecked.length}/{matchRosterLimit}</b>. Resmi maçta en fazla 12, özel/hazırlık maçında en fazla 24 oyuncu seçilebilir. En az 5 oyuncu zorunludur.</p>
