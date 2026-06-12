@@ -1,75 +1,174 @@
-import { NextResponse } from 'next/server';
-import { hasSupabaseAdminEnv, jsonError } from '@/lib/apiHelpers';
-import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
+import { NextResponse } from "next/server";
+import { getSupabaseAdmin, hasSupabaseAdminConfig } from "@/lib/supabaseAdmin";
 
-function todayIsoDate() {
-  return new Date().toISOString().slice(0, 10);
+type AnyRow = Record<string, any>;
+
+function textValue(value: any, fallback = "") {
+  if (value === null || value === undefined) return fallback;
+  return String(value);
 }
 
-export async function GET(req: Request) {
-  try {
-    const { searchParams } = new URL(req.url);
-    const cityName = String(searchParams.get('city') || '').trim();
-    const venueName = String(searchParams.get('venue') || '').trim();
-    const date = String(searchParams.get('date') || todayIsoDate()).trim();
+function numValue(value: any): number | null {
+  const n = Number(value);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
 
-    if (!hasSupabaseAdminEnv()) {
-      return NextResponse.json({ ok: true, mode: 'demo-no-db', cities: [], venues: [], matches: [] });
+function pickName(row: AnyRow | undefined | null, fallback: string) {
+  if (!row) return fallback;
+  return (
+    row.name ||
+    row.team_name ||
+    row.club_name ||
+    row.title ||
+    row.label ||
+    fallback
+  );
+}
+
+function pickCityName(row: AnyRow | undefined | null, fallback: string) {
+  if (!row) return fallback;
+  return row.name || row.city_name || row.title || row.label || fallback;
+}
+
+function pickVenueName(row: AnyRow | undefined | null, fallback: string) {
+  if (!row) return fallback;
+  return row.name || row.venue_name || row.title || row.label || fallback;
+}
+
+function mapById(rows: AnyRow[] | null | undefined) {
+  const map = new Map<number, AnyRow>();
+  for (const row of rows || []) {
+    const id = numValue(row.id);
+    if (id) map.set(id, row);
+  }
+  return map;
+}
+
+export async function GET() {
+  try {
+    if (!hasSupabaseAdminConfig()) {
+      return NextResponse.json(
+        { ok: false, error: "Supabase admin config eksik." },
+        { status: 500 }
+      );
     }
 
     const supabase = getSupabaseAdmin();
 
-    const [citiesRes, venuesRes] = await Promise.all([
-      supabase.from('cities').select('id,name').order('name', { ascending: true }),
-      supabase.from('venues').select('id,city_id,name,cities(name)').order('name', { ascending: true }),
-    ]);
-    if (citiesRes.error) throw citiesRes.error;
-    if (venuesRes.error) throw venuesRes.error;
+    const [citiesRes, venuesRes, teamsRes, matchesRes, competitionsRes, categoriesRes] =
+      await Promise.all([
+        supabase.from("cities").select("*").order("id", { ascending: true }),
+        supabase.from("venues").select("*").order("id", { ascending: true }),
+        supabase.from("teams").select("*").order("id", { ascending: true }),
+        supabase.from("matches").select("*").order("id", { ascending: true }),
+        supabase.from("competitions").select("*").order("id", { ascending: true }),
+        supabase.from("categories").select("*").order("id", { ascending: true }),
+      ]);
 
-    let query = supabase
-      .from('operator_match_queue')
-      .select('*')
-      .eq('match_date', date)
-      .order('match_order', { ascending: true })
-      .order('match_id', { ascending: true });
+    if (matchesRes.error) {
+      return NextResponse.json(
+        { ok: false, error: matchesRes.error.message },
+        { status: 500 }
+      );
+    }
 
-    if (venueName) query = query.eq('venue_name', venueName);
+    const cities = citiesRes.data || [];
+    const venues = venuesRes.data || [];
+    const teams = teamsRes.data || [];
+    const matches = matchesRes.data || [];
+    const competitions = competitionsRes.data || [];
+    const categories = categoriesRes.data || [];
 
-    const matchesRes = await query;
-    if (matchesRes.error) throw matchesRes.error;
+    const cityMap = mapById(cities);
+    const venueMap = mapById(venues);
+    const teamMap = mapById(teams);
+    const competitionMap = mapById(competitions);
+    const categoryMap = mapById(categories);
 
-    const allVenues = (venuesRes.data || []).map((v: any) => ({
-      id: v.id,
-      city_id: v.city_id,
-      city: v.cities?.name || '',
-      name: v.name,
-    }));
+    const cityNames = Array.from(
+      new Set(cities.map((c) => pickCityName(c, "Şehir")).filter(Boolean))
+    ).sort((a, b) => String(a).localeCompare(String(b), "tr"));
 
-    const matches = (matchesRes.data || [])
-      .filter((m: any) => !cityName || m.city_name === cityName)
-      .map((m: any) => ({
-        id: m.match_id,
-        time: m.match_time || 'Saat yok',
-        city: m.city_name || cityName || '',
-        venue: m.venue_name || venueName || '',
-        home: m.home_team_name || 'Ev Sahibi',
-        away: m.away_team_name || 'Misafir',
-        homeTeamId: m.home_team_id || null,
-        awayTeamId: m.away_team_id || null,
-        category: m.category_name || '-',
-        competition: m.competition_name || 'Resmi Maç',
-        competitionType: m.competition_type || 'LEAGUE',
-        countsForStandings: m.counts_for_standings ?? true,
-        countsForSeasonStats: m.counts_for_season_stats ?? true,
-      }));
+    const venueOptions = venues.map((v) => {
+      const venueId = numValue(v.id) || 0;
+      const cityId = numValue(v.city_id);
+      const cityName = cityId ? pickCityName(cityMap.get(cityId), "Bursa") : textValue(v.city, "Bursa");
+      return {
+        id: venueId,
+        city: cityName,
+        name: pickVenueName(v, `Salon ${venueId}`),
+      };
+    });
+
+    const visibleMatches = matches.filter((m) => {
+      const status = textValue(m.status).toUpperCase();
+      const locked = Boolean(m.locked);
+      return !locked && ["PLANLANDI", "DEVAM_EDIYOR", "DEVAM", "LIVE"].includes(status);
+    });
+
+    const matchOptions = visibleMatches.map((m) => {
+      const matchId = numValue(m.id) || 0;
+      const homeTeamId = numValue(m.home_team_id);
+      const awayTeamId = numValue(m.away_team_id);
+      const venueId = numValue(m.venue_id);
+      const cityId = numValue(m.city_id) || (venueId ? numValue(venueMap.get(venueId)?.city_id) : null);
+      const competitionId = numValue(m.competition_id);
+      const categoryId = numValue(m.category_id);
+
+      const homeTeam = homeTeamId ? teamMap.get(homeTeamId) : null;
+      const awayTeam = awayTeamId ? teamMap.get(awayTeamId) : null;
+      const venue = venueId ? venueMap.get(venueId) : null;
+      const city = cityId ? cityMap.get(cityId) : null;
+      const competition = competitionId ? competitionMap.get(competitionId) : null;
+      const category = categoryId ? categoryMap.get(categoryId) : null;
+
+      const matchTime =
+        m.match_time ||
+        m.time ||
+        (m.match_date ? String(m.match_date).slice(11, 16) : "") ||
+        "Bugün";
+
+      return {
+        id: matchId,
+        time: matchTime,
+        city: pickCityName(city, textValue(m.city, "Bursa")),
+        venue: pickVenueName(venue, textValue(m.venue, "Demo Salon")),
+        home: pickName(homeTeam, `Ev Sahibi ${homeTeamId || ""}`.trim()),
+        away: pickName(awayTeam, `Misafir ${awayTeamId || ""}`.trim()),
+
+        // V2.1.26I kritik düzeltme:
+        // Operator sayfası gerçek oyuncuları yüklemek için bu iki alanı bekliyor.
+        homeTeamId,
+        awayTeamId,
+
+        status: m.status || "PLANLANDI",
+        locked: Boolean(m.locked),
+        category: pickName(category, textValue(m.category, "SERBEST")),
+        competition: pickName(competition, textValue(m.competition, "Lig / Test Maçı")),
+        competitionType:
+          m.competition_type ||
+          m.match_type ||
+          m.match_kind ||
+          "LEAGUE",
+        matchKind: m.match_kind || m.match_type || null,
+        rosterLimit: Number(m.roster_limit || 12),
+      };
+    });
 
     return NextResponse.json({
       ok: true,
-      cities: citiesRes.data || [],
-      venues: allVenues,
-      matches,
+      source: "supabase",
+      cities: cityNames.length ? cityNames : ["Bursa"],
+      venues: venueOptions,
+      matches: matchOptions,
+      adminCities: cityNames.length ? cityNames : ["Bursa"],
+      adminVenues: venueOptions,
+      adminMatches: matchOptions,
     });
   } catch (err: any) {
-    return jsonError('operator queue failed', 500, err.message || err);
+    return NextResponse.json(
+      { ok: false, error: String(err?.message || err) },
+      { status: 500 }
+    );
   }
 }
