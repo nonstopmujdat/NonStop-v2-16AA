@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin, hasSupabaseAdminConfig } from "@/lib/supabaseAdmin";
 
-type MinutesAction = "OPEN_STARTERS" | "OPEN_PLAYER" | "CLOSE_PLAYER";
+type MinutesAction = "OPEN_STARTERS" | "OPEN_PLAYER" | "CLOSE_PLAYER" | "CLOSE_TEAM_OPEN";
 
 type MinutesPayload = {
   action?: MinutesAction;
@@ -109,6 +109,44 @@ export async function POST(req: Request) {
 
       if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
       return NextResponse.json({ ok: true, action, match_id: matchId, player_id: playerId });
+    }
+
+    if (action === "CLOSE_TEAM_OPEN") {
+      if (!teamId) {
+        return NextResponse.json({ ok: false, error: "CLOSE_TEAM_OPEN için team_id zorunlu." }, { status: 400 });
+      }
+
+      const { data: openSessions, error: selectError } = await supabase
+        .from("player_time_sessions")
+        .select("id, start_clock_seconds")
+        .eq("match_id", matchId)
+        .eq("team_id", teamId)
+        .is("end_clock_seconds", null);
+
+      if (selectError) {
+        return NextResponse.json({ ok: false, error: selectError.message }, { status: 500 });
+      }
+
+      const rows = openSessions || [];
+      for (const row of rows) {
+        const startClock = Number(row.start_clock_seconds ?? clockSeconds);
+        const sessionSeconds = Math.max(0, startClock - clockSeconds);
+        const { error: updateError } = await supabase
+          .from("player_time_sessions")
+          .update({
+            end_clock_seconds: clockSeconds,
+            end_game_clock: gameClock,
+            session_seconds: sessionSeconds,
+            closed_at: new Date().toISOString(),
+          })
+          .eq("id", row.id);
+
+        if (updateError) {
+          return NextResponse.json({ ok: false, error: updateError.message }, { status: 500 });
+        }
+      }
+
+      return NextResponse.json({ ok: true, action, match_id: matchId, team_id: teamId, closed_count: rows.length });
     }
 
     return NextResponse.json({ ok: false, error: `Bilinmeyen action: ${String(action)}` }, { status: 400 });

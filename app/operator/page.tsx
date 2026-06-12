@@ -228,7 +228,7 @@ export default function OperatorPage() {
   }
 
   async function postOperatorMinutes(
-    action: "OPEN_STARTERS" | "OPEN_PLAYER" | "CLOSE_PLAYER",
+    action: "OPEN_STARTERS" | "OPEN_PLAYER" | "CLOSE_PLAYER" | "CLOSE_TEAM_OPEN",
     playerId?: number | null,
     override?: Partial<{ quarter: number; clockSeconds: number; gameClock: string; teamId: number }>,
   ) {
@@ -292,8 +292,17 @@ export default function OperatorPage() {
     });
   }
 
+  async function closeTeamOpenMinuteSessions(clockSeconds = seconds) {
+    const ok = await postOperatorMinutes("CLOSE_TEAM_OPEN", null, {
+      clockSeconds,
+      gameClock: fmt(clockSeconds),
+    });
+    if (ok) log(`SİSTEM: ${controlledTeamName} açık süre kayıtları kapatıldı.`);
+    return ok;
+  }
+
   async function closeOnCourtMinuteSessions(clockSeconds = seconds) {
-    await Promise.all(onCourt.map((player) => closePlayerMinuteSession(player, clockSeconds)));
+    await closeTeamOpenMinuteSessions(clockSeconds);
   }
 
   async function openOnCourtMinuteSessions(nextQuarter: number, clockSeconds: number) {
@@ -1102,6 +1111,7 @@ export default function OperatorPage() {
       return;
     }
     await saveRosterToDb(starterChecked.slice(0, 5));
+    await closeTeamOpenMinuteSessions(seconds);
     await openStarterMinuteSessions();
     setOnCourt(starterChecked.slice(0, 5));
     setBench(rosterChecked.filter((p) => !starterChecked.includes(p)));
