@@ -227,6 +227,81 @@ export default function OperatorPage() {
     setFeed((prev) => [text, ...prev].slice(0, 30));
   }
 
+
+  function getOperatorDeviceId() {
+    if (typeof window === "undefined") return "server";
+    const key = "nonstop_operator_device_id";
+    const existing = window.localStorage.getItem(key);
+    if (existing) return existing;
+    const next = `device_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+    window.localStorage.setItem(key, next);
+    return next;
+  }
+
+  async function postOperatorRejoin(action: "JOIN" | "HEARTBEAT" | "LEAVE" | "REJOIN") {
+    if (!activeMatch?.id) return false;
+
+    const body = {
+      action,
+      match_id: Number(activeMatch.id),
+      team_id: Number(getControlledTeamId()),
+      operator_side: operatorSide,
+      device_id: getOperatorDeviceId(),
+    };
+
+    try {
+      const res = await fetch("/api/operator-rejoin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        cache: "no-store",
+        body: JSON.stringify(body),
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok || json?.ok === false) {
+        if (action !== "HEARTBEAT") {
+          log(`SİSTEM: operatör oturum hatası ${action} ${String(json?.error || res.statusText).slice(0, 120)}`);
+        }
+        return false;
+      }
+      if (action !== "HEARTBEAT") {
+        log(`SİSTEM: operatör oturumu ${json?.action || action} OK.`);
+      }
+      return true;
+    } catch (err: any) {
+      if (action !== "HEARTBEAT") {
+        log(`SİSTEM: operatör oturum API hatası ${String(err?.message || err).slice(0, 120)}`);
+      }
+      return false;
+    }
+  }
+
+  function sendOperatorLeaveBeacon() {
+    if (typeof window === "undefined" || !activeMatch?.id) return;
+    const body = JSON.stringify({
+      action: "LEAVE",
+      match_id: Number(activeMatch.id),
+      team_id: Number(getControlledTeamId()),
+      operator_side: operatorSide,
+      device_id: getOperatorDeviceId(),
+    });
+
+    try {
+      if (navigator.sendBeacon) {
+        const blob = new Blob([body], { type: "application/json" });
+        navigator.sendBeacon("/api/operator-rejoin", blob);
+      } else {
+        fetch("/api/operator-rejoin", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body,
+          keepalive: true,
+        });
+      }
+    } catch {
+      // Sayfa kapanırken hata yazdırmaya gerek yok.
+    }
+  }
+
   async function postOperatorMinutes(
     action: "OPEN_STARTERS" | "OPEN_PLAYER" | "CLOSE_PLAYER" | "CLOSE_TEAM_OPEN",
     playerId?: number | null,
@@ -335,6 +410,30 @@ export default function OperatorPage() {
       if (timer) clearInterval(timer);
     };
   }, [timer]);
+
+
+  useEffect(() => {
+    if (!activeMatch?.id) return;
+    if (!getControlledTeamId()) return;
+
+    postOperatorRejoin("JOIN");
+
+    const heartbeat = setInterval(() => {
+      postOperatorRejoin("HEARTBEAT");
+    }, 15000);
+
+    const handleBeforeUnload = () => {
+      sendOperatorLeaveBeacon();
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      clearInterval(heartbeat);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      postOperatorRejoin("LEAVE");
+    };
+  }, [activeMatch?.id, operatorSide, activeMatch?.homeTeamId, activeMatch?.awayTeamId]);
 
   useEffect(() => {
     if (seconds > 0) {
