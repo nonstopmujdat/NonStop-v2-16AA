@@ -56,28 +56,28 @@ type PlayerOption = {
 };
 const DEMO_CITIES = ["Bursa", "stanbul", "zmir", "Ankara", "Kocaeli"];
 const DEMO_VENUES: DemoVenue[] = [
-  { id: 1, city: "Bursa", name: "Nilfer Spor Salonu" },
-  { id: 2, city: "Bursa", name: "Tofa Spor Salonu" },
-  { id: 3, city: "Bursa", name: "Atatrk Spor Salonu" },
+  { id: 1, city: "Bursa", name: "Nilufer Spor Salonu" },
+  { id: 2, city: "Bursa", name: "Tofas Spor Salonu" },
+  { id: 3, city: "Bursa", name: "Ataturk Spor Salonu" },
   { id: 4, city: "stanbul", name: "Sinan Erdem Yan Salon" },
-  { id: 5, city: "zmir", name: "Halkapnar Spor Salonu" },
+  { id: 5, city: "zmir", name: "Halkapinar Spor Salonu" },
   { id: 6, city: "Ankara", name: "MEB Spor Salonu" },
-  { id: 7, city: "Kocaeli", name: "ehit Polis Recep Topalolu" },
+  { id: 7, city: "Kocaeli", name: "ehit Polis Recep Topaloglu" },
 ];
 const DEMO_TODAY_MATCHES: DemoMatch[] = [
-  { id: 1, time: "10:00", city: "Bursa", venue: "Nilfer Spor Salonu", home: "FNAL SPOR U14", away: "TOFA U14", homeTeamId: 1, awayTeamId: 2, category: "U14", competition: "Bursa U14 A Ligi", competitionType: "LEAGUE", countsForStandings: true, countsForSeasonStats: true },
-  { id: 2, time: "12:00", city: "Bursa", venue: "Nilfer Spor Salonu", home: "GEMLK U14", away: "BURSA BASKET U14", homeTeamId: 3, awayTeamId: 4, category: "U14", competition: "Bursa U14 A Ligi", competitionType: "LEAGUE", countsForStandings: true, countsForSeasonStats: true },
-  { id: 3, time: "14:00", city: "Bursa", venue: "Tofa Spor Salonu", home: "TOFA U16", away: "FNAL SPOR U16", homeTeamId: 5, awayTeamId: 6, category: "U16", competition: "Bursa U16 A Ligi", competitionType: "LEAGUE", countsForStandings: true, countsForSeasonStats: true },
-  { id: 4, time: "11:00", city: "stanbul", venue: "Sinan Erdem Yan Salon", home: "STANBUL YILDIZLAR U14", away: "BASKET AKADEM U14", homeTeamId: 7, awayTeamId: 8, category: "U14", competition: "stanbul U14 A Ligi", competitionType: "LEAGUE", countsForStandings: true, countsForSeasonStats: true },
+  { id: 1, time: "10:00", city: "Bursa", venue: "Nilufer Spor Salonu", home: "FINAL SPOR U14", away: "TOFAS U14", homeTeamId: 1, awayTeamId: 2, category: "U14", competition: "Bursa U14 A Ligi", competitionType: "LEAGUE", countsForStandings: true, countsForSeasonStats: true },
+  { id: 2, time: "12:00", city: "Bursa", venue: "Nilufer Spor Salonu", home: "GEMLIK U14", away: "BURSA BASKET U14", homeTeamId: 3, awayTeamId: 4, category: "U14", competition: "Bursa U14 A Ligi", competitionType: "LEAGUE", countsForStandings: true, countsForSeasonStats: true },
+  { id: 3, time: "14:00", city: "Bursa", venue: "Tofas Spor Salonu", home: "TOFAS U16", away: "FINAL SPOR U16", homeTeamId: 5, awayTeamId: 6, category: "U16", competition: "Bursa U16 A Ligi", competitionType: "LEAGUE", countsForStandings: true, countsForSeasonStats: true },
+  { id: 4, time: "11:00", city: "stanbul", venue: "Sinan Erdem Yan Salon", home: "STANBUL YILDIZLAR U14", away: "BASKET AKADEMI U14", homeTeamId: 7, awayTeamId: 8, category: "U14", competition: "stanbul U14 A Ligi", competitionType: "LEAGUE", countsForStandings: true, countsForSeasonStats: true },
 ];
 const HOME_PLAYERS = Array.from({ length: 26 }, (_, i) => {
   const jersey = i + 4;
-  const names = ["Ahmet", "Mehmet", "Ali", "Burak", "Kerem", "Ege", "Okan", "Mert", "Can", "Tuna", "Emir", "Arda", "Kaan", "Deniz", "Efe", "Bora", "Yiit", "Alp", "Umut", "Baran", "Doruk", "Rzgar", "Toprak", "Berk", "Eren", "Sarp"];
+  const names = ["Ahmet", "Mehmet", "Ali", "Burak", "Kerem", "Ege", "Okan", "Mert", "Can", "Tuna", "Emir", "Arda", "Kaan", "Deniz", "Efe", "Bora", "Yigit", "Alp", "Umut", "Baran", "Doruk", "Ruzgar", "Toprak", "Berk", "Eren", "Sarp"];
   return `#${jersey} ${names[i]}`;
 });
 const AWAY_PLAYERS = Array.from({ length: 30 }, (_, i) => {
   const jersey = i + 4;
-  const names = ["Ali", "Efe", "Mert", "Can", "Deniz", "Kaan", "Aras", "Bora", "Eren", "Yiit", "Alp", "Ozan", "Emirhan", "Taha", "Mira", "Kutay", "Atlas", "Arda", "aan", "Koray", "Rza", "Salih", "Onur", "Talha", "Yaman", "Poyraz", "Mete", "Eymen", "Akn", "Bartu"];
+  const names = ["Ali", "Efe", "Mert", "Can", "Deniz", "Kaan", "Aras", "Bora", "Eren", "Yigit", "Alp", "Ozan", "Emirhan", "Taha", "Mirac", "Kutay", "Atlas", "Arda", "Cagan", "Koray", "Riza", "Salih", "Onur", "Talha", "Yaman", "Poyraz", "Mete", "Eymen", "Akin", "Bartu"];
   return `#${jersey} ${names[i]}`;
 });
 const OFFICIAL_MATCH_ROSTER_LIMIT = 12;
@@ -92,13 +92,13 @@ export default function OperatorPage() {
   const [adminMatches, setAdminMatches] = useState<DemoMatch[]>([]);
   const [homePlayers, setHomePlayers] = useState<PlayerOption[]>([]);
   const [awayPlayers, setAwayPlayers] = useState<PlayerOption[]>([]);
-  const [queueInfo, setQueueInfo] = useState("Demo ma listesi ak.");
+  const [queueInfo, setQueueInfo] = useState("Demo mac listesi acik.");
   const cityOptions = adminCities.length ? adminCities : DEMO_CITIES;
   const allVenuesForSelect = adminVenues.length ? adminVenues : DEMO_VENUES;
   const cityVenues = allVenuesForSelect.filter((v) => v.city === selectedCity);
-  const [specialHomeName, setSpecialHomeName] = useState("FNAL SPOR U14");
+  const [specialHomeName, setSpecialHomeName] = useState("FINAL SPOR U14");
   const [specialAwayName, setSpecialAwayName] = useState("KARMA TAKIM U16");
-  const [specialMatchName, setSpecialMatchName] = useState("Hazrlk Ma");
+  const [specialMatchName, setSpecialMatchName] = useState("Hazirlik Maci");
   const [operatorMatchType, setOperatorMatchType] = useState<"FRIENDLY" | "SPECIAL_MATCH" | "TOURNAMENT">("FRIENDLY");
   const [specialCountsForSeason, setSpecialCountsForSeason] = useState(false);
   const [activeMatch, setActiveMatch] = useState<DemoMatch | null>(null);
@@ -108,7 +108,6 @@ export default function OperatorPage() {
   const [forfeitWarning, setForfeitWarning] = useState("");
   const [homeScore, setHomeScore] = useState(0);
   const [awayScore, setAwayScore] = useState(0);
-  const [liveScoreInfo, setLiveScoreInfo] = useState("Canlı skor senkronu bekliyor.");
   const [homeTeamFouls, setHomeTeamFouls] = useState(0);
   const [awayTeamFouls, setAwayTeamFouls] = useState(0);
   const [seconds, setSeconds] = useState(600);
@@ -134,11 +133,12 @@ export default function OperatorPage() {
   const clickPoints = useRef<1 | 2 | 3 | null>(null);
   const [markers, setMarkers] = useState<CourtMarker[]>([]);
   const [swapCourt, setSwapCourt] = useState(false);
+  const [liveScoreInfo, setLiveScoreInfo] = useState("Canlı skor senkronu bekliyor.");
 
   const sourceMatches = adminMatches.length ? adminMatches : DEMO_TODAY_MATCHES;
   const todaysVenueMatches = sourceMatches.filter((m) => m.city === selectedCity && m.venue === selectedVenue);
   const controlledTeamName = activeMatch ? (operatorSide === "HOME" ? activeMatch.home : activeMatch.away) : "TAKIM";
-  const opponentTeamName = activeMatch ? (operatorSide === "HOME" ? activeMatch.away : activeMatch.home) : "DER TAKIM";
+  const opponentTeamName = activeMatch ? (operatorSide === "HOME" ? activeMatch.away : activeMatch.home) : "DIGER TAKIM";
   const canStartClock = operatorSide === "HOME";
   const isSpecialOrFriendly = activeMatch?.competitionType === "SPECIAL_MATCH" || activeMatch?.competitionType === "FRIENDLY";
   const isTournamentMatch = activeMatch?.competitionType === "TOURNAMENT";
@@ -166,7 +166,7 @@ export default function OperatorPage() {
     setSubOut(player);
     setMustSubPlayer(player);
     setFouledOutPlayers((prev) => Array.from(new Set([...prev, player])));
-    log(`SSTEM: ${player} 5 faul yapt ve oyun d kald. Deiiklik yaplmadan oyun devam etmez.`);
+    log(`SISTEM: ${player} 5 faul yapti ve oyun disi kaldi. Degisiklik yapilmadan oyun devam etmez.`);
     persistMatchState("live");
   }
 
@@ -211,7 +211,7 @@ export default function OperatorPage() {
       });
     } catch (err: any) {
       log(
-        `SSTEM: ma durumu kaydedilemedi ${String(err?.message || err).slice(0, 90)}`,
+        `SISTEM: mac durumu kaydedilemedi ${String(err?.message || err).slice(0, 90)}`,
       );
     }
   }
@@ -300,17 +300,17 @@ export default function OperatorPage() {
       const json = await res.json().catch(() => null);
       if (!res.ok || json?.ok === false) {
         if (action !== "HEARTBEAT") {
-          log(`SSTEM: operatr oturum hatas ${action} ${String(json?.error || res.statusText).slice(0, 120)}`);
+          log(`SISTEM: operator oturum hatasi ${action} ${String(json?.error || res.statusText).slice(0, 120)}`);
         }
         return false;
       }
       if (action !== "HEARTBEAT") {
-        log(`SSTEM: operatr oturumu ${json?.action || action} OK.`);
+        log(`SISTEM: operator oturumu ${json?.action || action} OK.`);
       }
       return true;
     } catch (err: any) {
       if (action !== "HEARTBEAT") {
-        log(`SSTEM: operatr oturum API hatas ${String(err?.message || err).slice(0, 120)}`);
+        log(`SISTEM: operator oturum API hatasi ${String(err?.message || err).slice(0, 120)}`);
       }
       return false;
     }
@@ -339,7 +339,7 @@ export default function OperatorPage() {
         });
       }
     } catch {
-      // Sayfa kapanrken hata yazdrmaya gerek yok.
+      // Sayfa kapanirken hata yazdirmaya gerek yok.
     }
   }
 
@@ -370,12 +370,12 @@ export default function OperatorPage() {
       });
       const json = await res.json().catch(() => null);
       if (!res.ok || json?.ok === false) {
-        log(`SSTEM: sre kayd hatas ${action} ${String(json?.error || res.statusText).slice(0, 120)}`);
+        log(`SISTEM: sure kaydi hatasi ${action} ${String(json?.error || res.statusText).slice(0, 120)}`);
         return false;
       }
       return true;
     } catch (err: any) {
-      log(`SSTEM: sre API hatas ${action} ${String(err?.message || err).slice(0, 120)}`);
+      log(`SISTEM: sure API hatasi ${action} ${String(err?.message || err).slice(0, 120)}`);
       return false;
     }
   }
@@ -386,7 +386,7 @@ export default function OperatorPage() {
       clockSeconds: seconds,
       gameClock: fmt(seconds),
     });
-    if (ok) log(`SSTEM: ${controlledTeamName} ilk 5 sre kaytlar ald.`);
+    if (ok) log(`SISTEM: ${controlledTeamName} ilk 5 sure kayitlari acildi.`);
   }
 
   async function closePlayerMinuteSession(player: string, clockSeconds = seconds) {
@@ -413,7 +413,7 @@ export default function OperatorPage() {
       clockSeconds,
       gameClock: fmt(clockSeconds),
     });
-    if (ok) log(`SSTEM: ${controlledTeamName} ak sre kaytlar kapatld.`);
+    if (ok) log(`SISTEM: ${controlledTeamName} acik sure kayitlari kapatildi.`);
     return ok;
   }
 
@@ -427,11 +427,11 @@ export default function OperatorPage() {
 
   function startClock() {
     if (!canStartClock) {
-      log("SSTEM: sreyi sadece ev sahibi operatr balatabilir.");
+      log("SISTEM: sureyi sadece ev sahibi operatoru baslatabilir.");
       return;
     }
     if (mustSubPlayer) {
-      log(`SSTEM: ${mustSubPlayer} 5 faul nedeniyle oyundan kmal. nce deiiklik yap.`);
+      log(`SISTEM: ${mustSubPlayer} 5 faul nedeniyle oyundan cikmali. nce degisiklik yap.`);
       return;
     }
     if (timer || matchStatus === "finished") return;
@@ -488,6 +488,7 @@ export default function OperatorPage() {
     return () => clearInterval(liveScoreTimer);
   }, [activeMatch?.id, operatorSide, timer]);
 
+
   useEffect(() => {
     if (seconds > 0) {
       if (timer && seconds % 5 === 0) persistMatchState("live");
@@ -505,7 +506,7 @@ export default function OperatorPage() {
       setSeconds(600);
       resetPeriodTeamFouls();
       log(
-        `SSTEM: ${quarter}. periyot bitti, ${nextQuarter}. periyot 10:00 hazr. Balatmak iin ? bas.`,
+        `SISTEM: ${quarter}. periyot bitti, ${nextQuarter}. periyot 10:00 hazir. Baslatmak icin ? bas.`,
       );
       persistMatchState("live", { quarter: nextQuarter, seconds: 600 });
       return;
@@ -519,7 +520,7 @@ export default function OperatorPage() {
       setSeconds(300);
       resetPeriodTeamFouls();
       log(
-        `SSTEM: skor eit, UZATMA ${nextQuarter - 4} 05:00 hazr. Balatmak iin ? bas.`,
+        `SISTEM: skor esit, UZATMA ${nextQuarter - 4} 05:00 hazir. Baslatmak icin ? bas.`,
       );
       persistMatchState("live", { quarter: nextQuarter, seconds: 300 });
       return;
@@ -527,12 +528,12 @@ export default function OperatorPage() {
 
     closeOnCourtMinuteSessions(0);
     setMatchStatus("finished_pending");
-    log("SSTEM: ma bitti. 1 dakika dzeltme sresi balad.");
+    log("SISTEM: mac bitti. 1 dakika duzeltme suresi basladi.");
     persistMatchState("finished_pending", { seconds: 0 });
 
     const finishTimer = setTimeout(() => {
       setMatchStatus("finished");
-      log("SSTEM: ma kesin kaydedildi ve kilitlendi.");
+      log("SISTEM: mac kesin kaydedildi ve kilitlendi.");
       persistMatchState("finished", { seconds: 0 });
     }, 60000);
 
@@ -553,12 +554,12 @@ export default function OperatorPage() {
     const labels = getSidePlayerLabels(side);
     const initialRoster = labels.slice(0, Math.min(8, matchRosterLimit));
 
-    // V2.1.26H-4C: lk 5 artk otomatik seilmez.
-    // Operatr STARTERS ekrannda tam 5 oyuncuyu manuel seer.
+    // V2.1.26H-4C: lk 5 artik otomatik secilmez.
+    // Operator STARTERS ekraninda tam 5 oyuncuyu manuel secer.
     setRosterChecked(initialRoster);
     setStarterChecked([]);
     setSelectedPlayer(initialRoster[0] || "");
-    setForfeitWarning(labels.length ? "" : "Bu takm iin oyuncu bulunamad. Mini Admin / Veri Ynetimi ekranndan oyuncu ekleyin.");
+    setForfeitWarning(labels.length ? "" : "Bu takim icin oyuncu bulunamadi. Mini Admin / Veri Yonetimi ekranindan oyuncu ekleyin.");
   }
 
   function getControlledTeamId() {
@@ -593,19 +594,19 @@ export default function OperatorPage() {
 
     const playerId = payload.player_id ?? getPlayerId(player);
     if (!player || player === "YOK" || player === "PENDING" || !playerId) {
-      log(`SSTEM: ${dbType} kaydedilemedi. nce geerli oyuncu seiniz.`);
+      log(`SISTEM: ${dbType} kaydedilemedi. nce gecerli oyuncu seciniz.`);
       return false;
     }
 
-    // Oyuncu dorulamada asl art: geerli player_id bulunmasdr.
-    // Not: onCourt listesi bazen oyuncu etiketiyle birebir elemedii iin
-    // seili oyuncu varken hatal oyuncu seiniz uyars verebiliyordu.
-    // Bu nedenle FOUL_DRAWN / FOUL / ut / asist gibi kaytlar iin
-    // oyuncu ID'si varsa kayt yaplmasna izin veriyoruz. Sre ve sahada olma
-    // hesab ayr olarak match_rosters + substitutions zerinden yaplr.
+    // Oyuncu dogrulamada asil art: gecerli player_id bulunmasidir.
+    // Not: onCourt listesi bazen oyuncu etiketiyle birebir eslesmedigi icin
+    // secili oyuncu varken hatali oyuncu seciniz uyarisi verebiliyordu.
+    // Bu nedenle FOUL_DRAWN / FOUL / ut / asist gibi kayitlar icin
+    // oyuncu ID'si varsa kayit yapilmasina izin veriyoruz. Sure ve sahada olma
+    // hesabi ayri olarak match_rosters + substitutions zerinden yapilir.
 
     if (isFouledOut(player)) {
-      log(`SSTEM: ${player} 5 faul nedeniyle istatistik alamaz.`);
+      log(`SISTEM: ${player} 5 faul nedeniyle istatistik alamaz.`);
       return false;
     }
 
@@ -638,12 +639,12 @@ export default function OperatorPage() {
       });
       const json = await res.json().catch(() => null);
       if (!res.ok || json?.ok === false) {
-        log(`SSTEM: kadro Supabase kayt hatas ${String(json?.error || res.statusText).slice(0, 120)}`);
+        log(`SISTEM: kadro Supabase kayit hatasi ${String(json?.error || res.statusText).slice(0, 120)}`);
         return;
       }
-      log(`SSTEM: ${controlledTeamName} ma kadrosu Supabase'e kaydedildi (${json?.count || rosterChecked.length} oyuncu).`);
+      log(`SISTEM: ${controlledTeamName} mac kadrosu Supabase'e kaydedildi (${json?.count || rosterChecked.length} oyuncu).`);
     } catch (err: any) {
-      log(`SSTEM: kadro kayt API hatas ${String(err?.message || err).slice(0, 120)}`);
+      log(`SISTEM: kadro kayit API hatasi ${String(err?.message || err).slice(0, 120)}`);
     }
   }
 
@@ -670,12 +671,12 @@ export default function OperatorPage() {
       });
       const json = await res.json().catch(() => null);
       if (!res.ok || json?.ok === false) {
-        log(`SSTEM: deiiklik Supabase kayt hatas ${String(json?.error || res.statusText).slice(0, 120)}`);
+        log(`SISTEM: degisiklik Supabase kayit hatasi ${String(json?.error || res.statusText).slice(0, 120)}`);
         return;
       }
-      log(`SSTEM: deiiklik Supabase'e kaydedildi. ${playerOut} OUT / ${playerIn} IN`);
+      log(`SISTEM: degisiklik Supabase'e kaydedildi. ${playerOut} OUT / ${playerIn} IN`);
     } catch (err: any) {
-      log(`SSTEM: deiiklik API hatas ${String(err?.message || err).slice(0, 120)}`);
+      log(`SISTEM: degisiklik API hatasi ${String(err?.message || err).slice(0, 120)}`);
     }
   }
 
@@ -748,7 +749,7 @@ export default function OperatorPage() {
         if (nextCount >= 5) {
           setTimeout(() => requireFoulOutSubstitution(player), 0);
         } else {
-          log(`SSTEM: ${player} faul says ${nextCount}/5.`);
+          log(`SISTEM: ${player} faul sayisi ${nextCount}/5.`);
         }
         return next;
       });
@@ -756,18 +757,18 @@ export default function OperatorPage() {
 
     if (shouldAutoStopClock(dbType)) {
       stopClock();
-      log(`SSTEM: ${dbType} nedeniyle sre otomatik durdu. Devam iin ? bas.`);
+      log(`SISTEM: ${dbType} nedeniyle sure otomatik durdu. Devam icin ? bas.`);
       persistMatchState("live");
     }
 
-    // Online modda olaylar Supabase'e yazan Next.js API route'una gnderir.
-    // Demo sabitleri 003_demo_match_data.sql ile oluturulan test mana baldr.
+    // Online modda olaylari Supabase'e yazan Next.js API route'una gonderir.
+    // Demo sabitleri 003_demo_match_data.sql ile olusturulan test macina baglidir.
     if (online) {
       const apiPayload = {
         client_event_id: event.event_id,
         event_type: dbType,
         // V2.1.18: her online olay zorunlu olarak API'ye gider.
-        // API demo-no-db cevab verirse artk baar saylmaz; ekranda grnr hata yazar.
+        // API demo-no-db cevabi verirse artik basari sayilmaz; ekranda gorunur hata yazar.
         match_id: Number(payload.match_id ?? activeMatch?.id ?? 1),
         team_id: Number(payload.team_id ?? getControlledTeamId()),
         player_id: playerId ?? null,
@@ -803,24 +804,24 @@ export default function OperatorPage() {
 
           if (!res.ok || json?.ok === false || json?.mode === "demo-no-db") {
             console.error(
-              "NONSTOP Supabase kayt hatas:",
+              "NONSTOP Supabase kayit hatasi:",
               rawText,
               apiPayload,
             );
             log(
-              `SSTEM: Supabase kayt hatas (${dbType}) ${String(json?.error || rawText || res.statusText).slice(0, 140)}`,
+              `SISTEM: Supabase kayit hatasi (${dbType}) ${String(json?.error || rawText || res.statusText).slice(0, 140)}`,
             );
             return;
           }
 
           markSynced();
           const insertedId = json?.data?.id ? ` id:${json.data.id}` : "";
-          log(`SSTEM: Supabase kayt OK (${dbType})${insertedId}`);
+          log(`SISTEM: Supabase kayit OK (${dbType})${insertedId}`);
         })
         .catch((err) => {
-          console.error("NONSTOP API balant hatas:", err, apiPayload);
+          console.error("NONSTOP API baglanti hatasi:", err, apiPayload);
           log(
-            `SSTEM: API balant hatas (${dbType}) ${String(err?.message || err).slice(0, 120)}`,
+            `SISTEM: API baglanti hatasi (${dbType}) ${String(err?.message || err).slice(0, 120)}`,
           );
         });
     }
@@ -828,7 +829,7 @@ export default function OperatorPage() {
 
   async function syncNow() {
     markSynced();
-    log("SSTEM: offline kuyruk senkronize edildi");
+    log("SISTEM: offline kuyruk senkronize edildi");
   }
 
   function toggleOnline() {
@@ -839,7 +840,7 @@ export default function OperatorPage() {
 
   function eventOnly(type: string) {
     if (matchStatus === "finished") {
-      log("SSTEM: ma kilitli, yeni istatistik girilemez.");
+      log("SISTEM: mac kilitli, yeni istatistik girilemez.");
       return;
     }
     if (!validatePlayerForStat(type, selectedPlayer)) {
@@ -851,7 +852,7 @@ export default function OperatorPage() {
 
   function startShot(points: 1 | 2 | 3, made: boolean) {
     if (matchStatus === "finished") {
-      log("SSTEM: ma kilitli, ut girilemez.");
+      log("SISTEM: mac kilitli, ut girilemez.");
       return;
     }
     const shotType = points === 1 ? (made ? "FTA_MADE" : "FTA_MISS") : points === 2 ? (made ? "2PA_MADE" : "2PA_MISS") : (made ? "3PA_MADE" : "3PA_MISS");
@@ -868,11 +869,14 @@ export default function OperatorPage() {
       tags: [],
     };
 
-    if (made) setHomeScore((s) => s + points);
+    if (made) {
+      if (operatorSide === "AWAY") setAwayScore((s) => s + points);
+      else setHomeScore((s) => s + points);
+    }
 
     if (points === 1) {
       stopClock();
-      log("SSTEM: serbest at / +1 iin sre durdu. ut yerini sahadan iaretle.");
+      log("SISTEM: serbest atis / +1 icin sure durdu. ut yerini sahadan isaretle.");
       setPendingShot(ctx);
       return;
     }
@@ -882,8 +886,8 @@ export default function OperatorPage() {
   }
 
   function handleStatClick(points: 1 | 2 | 3) {
-    // Tek tk: 1 saniye bekler, ikinci tk gelmezse isabetsiz at.
-    // Ayn butona ikinci tk 1 saniye iinde gelirse say olarak kaydeder.
+    // Tek tik: 1 saniye bekler, ikinci tik gelmezse isabetsiz atis.
+    // Ayni butona ikinci tik 1 saniye icinde gelirse sayi olarak kaydeder.
     if (clickTimer.current && clickPoints.current === points) {
       clearTimeout(clickTimer.current);
       clickTimer.current = null;
@@ -945,7 +949,7 @@ export default function OperatorPage() {
       ? context.tags.join("-")
       : context.made
         ? "SAYI"
-        : "SABETSZ";
+        : "ISABETSIZ";
 
     addQueue(type, context.player, {
       ...context,
@@ -962,7 +966,7 @@ export default function OperatorPage() {
 
     if (context.made && quarter >= 4 && seconds <= 120) {
       stopClock();
-      log("SSTEM: 4. eyrek son 2 dk say oldu, sre durdu. Devam iin ? bas.");
+      log("SISTEM: 4. eyrek son 2 dk sayi oldu, sure durdu. Devam icin ? bas.");
       persistMatchState("live");
     }
 
@@ -1018,7 +1022,7 @@ export default function OperatorPage() {
       return;
     }
     stopClock();
-    log("SSTEM: faul seimi iin sre durdu. Devam iin ? bas.");
+    log("SISTEM: faul secimi icin sure durdu. Devam icin ? bas.");
     setPendingShot(null);
     setPendingFoul(type);
     setCourtTab("fouls");
@@ -1051,8 +1055,8 @@ export default function OperatorPage() {
     const label =
       pendingShot.points === 1
         ? pendingShot.made
-          ? "FT✓"
-          : "FT"
+          ? "FT?"
+          : "FT✓"
         : `${pendingShot.points}P${pendingShot.made ? "?" : ""}`;
     setMarkers((prev) => [
       {
@@ -1072,7 +1076,7 @@ export default function OperatorPage() {
   function beginSubstitution(playerOut: string) {
     stopClock();
     setSubOut(playerOut);
-    log(`SSTEM: oyuncu deiiklii balad, sre durdu. ${playerOut} iin yedekten oyuncu se. Devam iin ? baslacak.`);
+    log(`SISTEM: oyuncu degisikligi basladi, sure durdu. ${playerOut} icin yedekten oyuncu sec. Devam icin ? basilacak.`);
     persistMatchState("live");
   }
 
@@ -1082,12 +1086,12 @@ export default function OperatorPage() {
     const playerOut = subOut;
     if (playerIn === playerOut) return;
     if (isFouledOut(playerIn)) {
-      log(`SSTEM: ${playerIn} 5 faul nedeniyle oyuna giremez.`);
+      log(`SISTEM: ${playerIn} 5 faul nedeniyle oyuna giremez.`);
       return;
     }
 
-    // Oyuncu deiiklii sadece olay kayd deil, ekrandaki kadroyu da gnceller.
-    // kan oyuncu sahadan yedeklere, giren oyuncu yedekten sahaya tanr.
+    // Oyuncu degisikligi sadece olay kaydi degil, ekrandaki kadroyu da gunceller.
+    // cikan oyuncu sahadan yedeklere, giren oyuncu yedekten sahaya tasinir.
     setOnCourt((prev) => {
       const replaced = prev.map((p) => (p === playerOut ? playerIn : p));
       return Array.from(new Set(replaced)).slice(0, 5);
@@ -1103,7 +1107,7 @@ export default function OperatorPage() {
     setSelectedPlayer(playerIn);
     if (mustSubPlayer === playerOut) setMustSubPlayer(null);
     stopClock();
-    log("SSTEM: oyuncu deiiklii iin sre durdu. Devam iin ? bas.");
+    log("SISTEM: oyuncu degisikligi icin sure durdu. Devam icin ? bas.");
     addQueue("SUBSTITUTION", playerOut, {
       match_id: activeMatch?.id,
       team_id: getControlledTeamId(),
@@ -1114,7 +1118,7 @@ export default function OperatorPage() {
     await closePlayerMinuteSession(playerOut);
     await openPlayerMinuteSession(playerIn);
     saveSubstitutionToDb(playerOut, playerIn);
-    log(`${fmt(seconds)} DEKLK: ${playerOut} OUT / ${playerIn} IN`);
+    log(`${fmt(seconds)} DEGISIKLIK: ${playerOut} OUT / ${playerIn} IN`);
     setSubOut(null);
   }
 
@@ -1149,7 +1153,7 @@ export default function OperatorPage() {
           homeTeamId: Number(m.homeTeamId || m.home_team_id || 0) || null,
           awayTeamId: Number(m.awayTeamId || m.away_team_id || 0) || null,
           category: String(m.category || "-"),
-          competition: String(m.competition || "Resmi Ma"),
+          competition: String(m.competition || "Resmi Mac"),
           competitionType: (m.competitionType || "LEAGUE") as DemoMatch["competitionType"],
           countsForStandings: m.countsForStandings ?? true,
           countsForSeasonStats: m.countsForSeasonStats ?? true,
@@ -1157,9 +1161,9 @@ export default function OperatorPage() {
         setAdminCities(apiCities);
         setAdminVenues(apiVenues);
         setAdminMatches(apiMatches);
-        setQueueInfo(apiMatches.length ? "Mini Admin malar yklendi." : "Bugn seili salonda Mini Admin ma yok. Demo liste ak olabilir.");
+        setQueueInfo(apiMatches.length ? "Mini Admin maclari yuklendi." : "Bugun secili salonda Mini Admin maci yok. Demo liste acik olabilir.");
       } catch (err: any) {
-        setQueueInfo(`Mini Admin malar alnamad: ${String(err?.message || err).slice(0, 80)}`);
+        setQueueInfo(`Mini Admin maclari alinamadi: ${String(err?.message || err).slice(0, 80)}`);
       }
     }
     loadOperatorQueue();
@@ -1178,7 +1182,7 @@ export default function OperatorPage() {
         const res = await fetch(`/api/operator-team-players?${params.toString()}`, { cache: "no-store" });
         const json = await res.json().catch(() => null);
         if (cancelled || !json?.ok) {
-          if (!cancelled) log(`SSTEM: oyuncular alnamad ${String(json?.error || res.statusText).slice(0, 100)}`);
+          if (!cancelled) log(`SISTEM: oyuncular alinamadi ${String(json?.error || res.statusText).slice(0, 100)}`);
           return;
         }
         const nextHome = (json.homePlayers || []) as PlayerOption[];
@@ -1186,7 +1190,7 @@ export default function OperatorPage() {
         setHomePlayers(nextHome);
         setAwayPlayers(nextAway);
       } catch (err: any) {
-        if (!cancelled) log(`SSTEM: oyuncu API hatas ${String(err?.message || err).slice(0, 100)}`);
+        if (!cancelled) log(`SISTEM: oyuncu API hatasi ${String(err?.message || err).slice(0, 100)}`);
       }
     }
     loadMatchPlayers();
@@ -1198,8 +1202,8 @@ export default function OperatorPage() {
     const labels = getSidePlayerLabels(operatorSide);
     if (!labels.length) return;
 
-    // V2.1.26H-4C: Takm listesi/ma kadrosu hazr gelir,
-    // fakat ilk 5 otomatik seilmez. lk 5'i operatr elle belirler.
+    // V2.1.26H-4C: Takim listesi/mac kadrosu hazir gelir,
+    // fakat ilk 5 otomatik secilmez. lk 5'i operator elle belirler.
     setRosterChecked(labels.slice(0, Math.min(8, matchRosterLimit)));
     setStarterChecked([]);
     setSelectedPlayer(labels[0] || "");
@@ -1212,7 +1216,7 @@ export default function OperatorPage() {
         return prev.filter((p) => p !== player);
       }
       if (prev.length >= matchRosterLimit) {
-        setForfeitWarning(`${isSpecialOrFriendly ? "zel/hazrlk manda" : "Resmi mata"} ma kadrosu en fazla ${matchRosterLimit} oyuncu olabilir.`);
+        setForfeitWarning(`${isSpecialOrFriendly ? "zel/hazirlik macinda" : "Resmi macta"} mac kadrosu en fazla ${matchRosterLimit} oyuncu olabilir.`);
         return prev;
       }
       setForfeitWarning("");
@@ -1231,8 +1235,8 @@ export default function OperatorPage() {
 
 
   function createSpecialMatch() {
-    const home = specialHomeName.trim() || "EV SAHB";
-    const away = specialAwayName.trim() || "MSAFR / KARMA";
+    const home = specialHomeName.trim() || "EV SAHIBI";
+    const away = specialAwayName.trim() || "MISAFIR / KARMA";
     const specialMatch: DemoMatch = {
       id: 9000 + Date.now(),
       time: "zel",
@@ -1243,7 +1247,7 @@ export default function OperatorPage() {
       homeTeamId: null,
       awayTeamId: null,
       category: "SERBEST",
-      competition: specialMatchName.trim() || (operatorMatchType === "TOURNAMENT" ? "Turnuva Ma" : "zel / Hazrlk Ma"),
+      competition: specialMatchName.trim() || (operatorMatchType === "TOURNAMENT" ? "Turnuva Maci" : "zel / Hazirlik Maci"),
       competitionType: operatorMatchType,
       countsForStandings: operatorMatchType === "TOURNAMENT",
       countsForSeasonStats: false,
@@ -1259,7 +1263,7 @@ export default function OperatorPage() {
 
   async function confirmStarters() {
     if (starterChecked.length !== 5) {
-      setForfeitWarning(`${controlledTeamName} iin tam 5 oyuncu semelisin. lk 5 otomatik seilmez.`);
+      setForfeitWarning(`${controlledTeamName} icin tam 5 oyuncu secmelisin. lk 5 otomatik secilmez.`);
       return;
     }
     await saveRosterToDb(starterChecked.slice(0, 5));
@@ -1269,7 +1273,7 @@ export default function OperatorPage() {
     setBench(rosterChecked.filter((p) => !starterChecked.includes(p)));
     setSelectedPlayer(starterChecked[0]);
     setFlowStep("GAME");
-    log(`SSTEM: ${controlledTeamName} ilk 5 onayland. ${operatorSide === "HOME" ? "Sre balatma yetkisi sende." : "Sreyi ev sahibi operatr balatacak."}`);
+    log(`SISTEM: ${controlledTeamName} ilk 5 onaylandi. ${operatorSide === "HOME" ? "Sure baslatma yetkisi sende." : "Sureyi ev sahibi operatoru baslatacak."}`);
   }
 
   if (flowStep !== "GAME") {
@@ -1277,17 +1281,17 @@ export default function OperatorPage() {
     return (
       <main className="nn-container" style={{ maxWidth: '800px', display: 'flex', flexDirection: 'column', gap: '1.5rem', marginTop: '2rem' }}>
         <div className="nn-header-area">
-          <h1 className="nn-title" style={{ textAlign: 'center' }}>NONSTOP Operatr Ak</h1>
-          <p className="nn-subtitle" style={{ textAlign: 'center' }}>l se  salon se  bugnk ma veya zel ma  grev taraf  ma kadrosu  ilk 5  ma ekran</p>
+          <h1 className="nn-title" style={{ textAlign: 'center' }}>NONSTOP Operator Akisi</h1>
+          <p className="nn-subtitle" style={{ textAlign: 'center' }}>l sec  salon sec  bugunku mac veya zel mac  gorev tarafi  mac kadrosu  ilk 5  mac ekrani</p>
         </div>
 
         <div className="nn-card">
           {flowStep === "CITY" && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <h2 style={{ fontSize: '1.5rem', color: '#fff', borderBottom: '1px solid var(--nn-border)', paddingBottom: '0.5rem' }}>1. l Se</h2>
-              <p style={{ color: 'var(--nn-text-muted)' }}>nce il seilir. Bylece yzlerce salon iinde karklk olmaz.</p>
+              <h2 style={{ fontSize: '1.5rem', color: '#fff', borderBottom: '1px solid var(--nn-border)', paddingBottom: '0.5rem' }}>1. l Sec</h2>
+              <p style={{ color: 'var(--nn-text-muted)' }}>nce il secilir. Boylece yuzlerce salon icinde karisiklik olmaz.</p>
               <div className="nn-form-group">
-                <label className="nn-form-label">ehir Seimi</label>
+                <label className="nn-form-label">ehir Secimi</label>
                 <select className="nn-select" value={selectedCity} onChange={(e) => {
                   const nextCity = e.target.value;
                   setSelectedCity(nextCity);
@@ -1297,37 +1301,37 @@ export default function OperatorPage() {
                   {cityOptions.map((c) => <option key={c}>{c}</option>)}
                 </select>
               </div>
-              <button className="nn-button nn-button-primary" style={{ alignSelf: 'flex-start', marginTop: '1rem' }} onClick={() => setFlowStep("VENUE")}>Salon Seimine Ge &rarr;</button>
+              <button className="nn-button nn-button-primary" style={{ alignSelf: 'flex-start', marginTop: '1rem' }} onClick={() => setFlowStep("VENUE")}>Salon Secimine Gec &rarr;</button>
             </div>
           )}
 
           {flowStep === "VENUE" && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <h2 style={{ fontSize: '1.5rem', color: '#fff', borderBottom: '1px solid var(--nn-border)', paddingBottom: '0.5rem' }}>2. Salon Se</h2>
-              <p style={{ color: 'var(--nn-text-muted)' }}>Seili il: <b style={{ color: 'var(--nn-cyan)' }}>{selectedCity}</b></p>
+              <h2 style={{ fontSize: '1.5rem', color: '#fff', borderBottom: '1px solid var(--nn-border)', paddingBottom: '0.5rem' }}>2. Salon Sec</h2>
+              <p style={{ color: 'var(--nn-text-muted)' }}>Secili il: <b style={{ color: 'var(--nn-cyan)' }}>{selectedCity}</b></p>
               <div className="nn-form-group">
-                <label className="nn-form-label">Salon Seimi</label>
+                <label className="nn-form-label">Salon Secimi</label>
                 <select className="nn-select" value={selectedVenue} onChange={(e) => setSelectedVenue(e.target.value)}>
                   {cityVenues.map((v) => <option key={v.id}>{v.name}</option>)}
                 </select>
               </div>
               <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
-                <button className="nn-button nn-button-primary" onClick={() => setFlowStep("MATCH")}>Bugnk Malar Getir &rarr;</button>
-                <button className="nn-button" style={{ background: 'transparent' }} onClick={() => setFlowStep("CITY")}>&larr; l Seimine Dn</button>
+                <button className="nn-button nn-button-primary" onClick={() => setFlowStep("MATCH")}>Bugunku Maclari Getir &rarr;</button>
+                <button className="nn-button" style={{ background: 'transparent' }} onClick={() => setFlowStep("CITY")}>&larr; l Secimine Don</button>
               </div>
             </div>
           )}
 
           {flowStep === "MATCH" && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <h2 style={{ fontSize: '1.5rem', color: '#fff', borderBottom: '1px solid var(--nn-border)', paddingBottom: '0.5rem' }}>3. Bugnk Ma Sras</h2>
+              <h2 style={{ fontSize: '1.5rem', color: '#fff', borderBottom: '1px solid var(--nn-border)', paddingBottom: '0.5rem' }}>3. Bugunku Mac Sirasi</h2>
               <p style={{ color: 'var(--nn-cyan)' }}>{queueInfo}</p>
-              {todaysVenueMatches.length === 0 ? <div style={{ padding: '1rem', background: 'rgba(239,68,68,0.1)', color: '#fca5a5', border: '1px solid #ef4444', borderRadius: '8px' }}>Bu salon iin bugn ma bulunamad. Mini Adminden ma oluturduktan sonra tekrar deneyin.</div> : null}
+              {todaysVenueMatches.length === 0 ? <div style={{ padding: '1rem', background: 'rgba(239,68,68,0.1)', color: '#fca5a5', border: '1px solid #ef4444', borderRadius: '8px' }}>Bu salon icin bugun mac bulunamadi. Mini Admin panelinden mac olusturduktan sonra tekrar deneyin.</div> : null}
               
               <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1rem', marginTop: '1rem' }}>
                 {todaysVenueMatches.map((m, index) => (
                   <button key={m.id} className="nn-button" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', padding: '1rem', height: 'auto', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--nn-border)' }} onClick={() => { setActiveMatch(m); setRosterChecked([]); setStarterChecked([]); setSelectedPlayer(""); setFlowStep("ROSTER"); }}>
-                    <b style={{ color: 'var(--nn-cyan)', marginBottom: '0.25rem' }}>{index + 1}. Ma  {m.time}</b>
+                    <b style={{ color: 'var(--nn-cyan)', marginBottom: '0.25rem' }}>{index + 1}. Mac  {m.time}</b>
                     <span style={{ fontSize: '1.1rem', color: '#fff', marginBottom: '0.25rem' }}>{m.home} - {m.away}</span>
                     <small style={{ color: 'var(--nn-text-muted)' }}>{m.competition}</small>
                   </button>
@@ -1335,48 +1339,48 @@ export default function OperatorPage() {
               </div>
 
               <div style={{ marginTop: '2rem', paddingTop: '2rem', borderTop: '1px solid var(--nn-border)' }}>
-                <h3 style={{ fontSize: '1.25rem', color: 'var(--nn-orange)', marginBottom: '0.5rem' }}>Supervisor zel / Hazrlk Ma</h3>
-                <p style={{ color: 'var(--nn-text-muted)', fontSize: '0.9rem', marginBottom: '1rem' }}>U14 - U16, karma takm veya resmi fikstre girmeyen malar iin. Bu ma lig puan durumuna ilemez; kendi iinde istatistik ve ut haritas tutar.</p>
+                <h3 style={{ fontSize: '1.25rem', color: 'var(--nn-orange)', marginBottom: '0.5rem' }}>Supervisor zel / Hazirlik Maci</h3>
+                <p style={{ color: 'var(--nn-text-muted)', fontSize: '0.9rem', marginBottom: '1rem' }}>U14 - U16, karma takim veya resmi fiksture girmeyen maclar icin. Bu mac lig puan durumuna islemez; kendi icinde istatistik ve ut haritasi tutar.</p>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
                   <div className="nn-form-group">
-                    <label className="nn-form-label">Ma tr</label>
-                    <select className="nn-select" value={operatorMatchType} onChange={(e) => setOperatorMatchType(e.target.value as any)}><option value="FRIENDLY">Hazrlk Ma</option><option value="SPECIAL_MATCH">zel Ma</option><option value="TOURNAMENT">Turnuva Ma</option></select>
+                    <label className="nn-form-label">Mac turu</label>
+                    <select className="nn-select" value={operatorMatchType} onChange={(e) => setOperatorMatchType(e.target.value as any)}><option value="FRIENDLY">Hazirlik Maci</option><option value="SPECIAL_MATCH">zel Mac</option><option value="TOURNAMENT">Turnuva Maci</option></select>
                   </div>
                   <div className="nn-form-group">
-                    <label className="nn-form-label">Ma ad</label>
+                    <label className="nn-form-label">Mac adi</label>
                     <input className="nn-input" value={specialMatchName} onChange={(e) => setSpecialMatchName(e.target.value)} />
                   </div>
                   <div className="nn-form-group">
-                    <label className="nn-form-label">1. Takm</label>
+                    <label className="nn-form-label">1. Takim</label>
                     <input className="nn-input" value={specialHomeName} onChange={(e) => setSpecialHomeName(e.target.value)} />
                   </div>
                   <div className="nn-form-group">
-                    <label className="nn-form-label">2. Takm / Karma</label>
+                    <label className="nn-form-label">2. Takim / Karma</label>
                     <input className="nn-input" value={specialAwayName} onChange={(e) => setSpecialAwayName(e.target.value)} />
                   </div>
                 </div>
-                <button className="nn-button nn-button-success" onClick={createSpecialMatch}>Ma Operatr Akna Al</button>
+                <button className="nn-button nn-button-success" onClick={createSpecialMatch}>Maci Operator Akisina Al</button>
               </div>
-              <button className="nn-button" style={{ background: 'transparent', alignSelf: 'flex-start', marginTop: '1rem' }} onClick={() => setFlowStep("VENUE")}>&larr; Salon Seimine Dn</button>
+              <button className="nn-button" style={{ background: 'transparent', alignSelf: 'flex-start', marginTop: '1rem' }} onClick={() => setFlowStep("VENUE")}>&larr; Salon Secimine Don</button>
             </div>
           )}
 
           {flowStep === "ROSTER" && activeMatch && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <h2 style={{ fontSize: '1.5rem', color: '#fff', borderBottom: '1px solid var(--nn-border)', paddingBottom: '0.5rem' }}>4. Operatr Taraf ve Ma Kadrosu</h2>
+              <h2 style={{ fontSize: '1.5rem', color: '#fff', borderBottom: '1px solid var(--nn-border)', paddingBottom: '0.5rem' }}>4. Operator Tarafi ve Mac Kadrosu</h2>
               {(activeMatch.competitionType === "SPECIAL_MATCH" || activeMatch.competitionType === "FRIENDLY" || activeMatch.competitionType === "TOURNAMENT") ? (
                 <div style={{ padding: '1rem', background: 'rgba(0, 240, 255, 0.1)', color: 'var(--nn-cyan)', border: '1px solid var(--nn-cyan)', borderRadius: '8px' }}>
-                  <b style={{ color: '#fff' }}>{activeMatch.competitionType === "TOURNAMENT" ? "Turnuva Ma" : "zel/Hazrlk Ma"}</b><br />
-                  <span style={{ fontSize: '0.9rem' }}>{activeMatch.competitionType === "TOURNAMENT" ? "Bu ma oyuncu ve takm kartnda Turnuvalar sekmesine ayrlr." : "Bu ma puan durumuna ilemez. ut haritas, faul haritas, oyuncu ve takm ma istatistikleri kendi iinde tutulur."}</span>
-                  <br /><span style={{ fontSize: '0.9rem' }}>{activeMatch.competitionType === "TOURNAMENT" ? "Turnuva kadro limiti resmi ma gibi 12 oyuncudur." : "Bu ma sezon istatistiine ilemez. Oyuncu profilinde zel/Hazrlk Malar blmnde ayr grnr."}</span>
+                  <b style={{ color: '#fff' }}>{activeMatch.competitionType === "TOURNAMENT" ? "Turnuva Maci" : "zel/Hazirlik Maci"}</b><br />
+                  <span style={{ fontSize: '0.9rem' }}>{activeMatch.competitionType === "TOURNAMENT" ? "Bu mac oyuncu ve takim kartinda Turnuvalar sekmesine ayrilir." : "Bu mac puan durumuna islemez. ut haritasi, faul haritasi, oyuncu ve takim mac istatistikleri kendi icinde tutulur."}</span>
+                  <br /><span style={{ fontSize: '0.9rem' }}>{activeMatch.competitionType === "TOURNAMENT" ? "Turnuva kadro limiti resmi mac gibi 12 oyuncudur." : "Bu mac sezon istatistigine islemez. Oyuncu profilinde zel/Hazirlik Maclari bolumunde ayri gorunur."}</span>
                 </div>
               ) : null}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', margin: '1rem 0' }}>
-                <button className="nn-button" style={{ display: 'flex', flexDirection: 'column', height: 'auto', padding: '1rem', border: operatorSide === "HOME" ? '2px solid var(--nn-cyan)' : '1px solid var(--nn-border)', background: operatorSide === "HOME" ? 'rgba(0,240,255,0.1)' : 'transparent' }} onClick={() => { setOperatorSide("HOME"); setTimeout(() => resetRosterForSide("HOME"), 0); }}><b style={{ color: operatorSide === "HOME" ? '#fff' : 'var(--nn-text-muted)', fontSize: '1.1rem' }}>Ev Sahibi Operatr</b><small style={{ color: 'var(--nn-text-muted)' }}>Sreyi balatabilir</small></button>
-                <button className="nn-button" style={{ display: 'flex', flexDirection: 'column', height: 'auto', padding: '1rem', border: operatorSide === "AWAY" ? '2px solid var(--nn-cyan)' : '1px solid var(--nn-border)', background: operatorSide === "AWAY" ? 'rgba(0,240,255,0.1)' : 'transparent' }} onClick={() => { setOperatorSide("AWAY"); setTimeout(() => resetRosterForSide("AWAY"), 0); }}><b style={{ color: operatorSide === "AWAY" ? '#fff' : 'var(--nn-text-muted)', fontSize: '1.1rem' }}>Misafir Operatr</b><small style={{ color: 'var(--nn-text-muted)' }}>Sreyi balatamaz</small></button>
+                <button className="nn-button" style={{ display: 'flex', flexDirection: 'column', height: 'auto', padding: '1rem', border: operatorSide === "HOME" ? '2px solid var(--nn-cyan)' : '1px solid var(--nn-border)', background: operatorSide === "HOME" ? 'rgba(0,240,255,0.1)' : 'transparent' }} onClick={() => { setOperatorSide("HOME"); setTimeout(() => resetRosterForSide("HOME"), 0); }}><b style={{ color: operatorSide === "HOME" ? '#fff' : 'var(--nn-text-muted)', fontSize: '1.1rem' }}>Ev Sahibi Operatoru</b><small style={{ color: 'var(--nn-text-muted)' }}>Sureyi baslatabilir</small></button>
+                <button className="nn-button" style={{ display: 'flex', flexDirection: 'column', height: 'auto', padding: '1rem', border: operatorSide === "AWAY" ? '2px solid var(--nn-cyan)' : '1px solid var(--nn-border)', background: operatorSide === "AWAY" ? 'rgba(0,240,255,0.1)' : 'transparent' }} onClick={() => { setOperatorSide("AWAY"); setTimeout(() => resetRosterForSide("AWAY"), 0); }}><b style={{ color: operatorSide === "AWAY" ? '#fff' : 'var(--nn-text-muted)', fontSize: '1.1rem' }}>Misafir Operatoru</b><small style={{ color: 'var(--nn-text-muted)' }}>Sureyi baslatamaz</small></button>
               </div>
-              <h3 style={{ color: '#fff' }}>{controlledTeamName} takm listesinden ma kadrosunu se</h3>
-              <p style={{ color: 'var(--nn-text-muted)', fontSize: '0.9rem' }}>Takm listesinde <b>{sidePlayers.length}</b> oyuncu olabilir. Ma kadrosu ise <b>{rosterChecked.length}/{matchRosterLimit}</b>. Resmi mata en fazla 12, zel/hazrlk manda en fazla 24 oyuncu seilebilir. En az 5 oyuncu zorunludur.</p>
+              <h3 style={{ color: '#fff' }}>{controlledTeamName} takim listesinden mac kadrosunu sec</h3>
+              <p style={{ color: 'var(--nn-text-muted)', fontSize: '0.9rem' }}>Takim listesinde <b>{sidePlayers.length}</b> oyuncu olabilir. Mac kadrosu ise <b>{rosterChecked.length}/{matchRosterLimit}</b>. Resmi macta en fazla 12, zel/hazirlik macinda en fazla 24 oyuncu secilebilir. En az 5 oyuncu zorunludur.</p>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '0.5rem', maxHeight: '300px', overflowY: 'auto', padding: '1rem', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', border: '1px solid var(--nn-border)' }}>
                 {sidePlayers.map((p) => (
                   <label key={p} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', color: rosterChecked.includes(p) ? '#fff' : 'var(--nn-text-muted)', background: rosterChecked.includes(p) ? 'rgba(0,240,255,0.1)' : 'transparent', padding: '0.5rem', borderRadius: '4px' }}>
@@ -1385,8 +1389,8 @@ export default function OperatorPage() {
                 ))}
               </div>
               <button className="nn-button nn-button-primary" style={{ alignSelf: 'flex-start', marginTop: '1rem' }} onClick={() => {
-                if (rosterChecked.length < 5) { setForfeitWarning(`${controlledTeamName} 5 oyuncu bildirmedi. Hkmen yenilgi riski var.`); return; }
-                if (rosterChecked.length > matchRosterLimit) { setForfeitWarning(`Ma kadrosu en fazla ${matchRosterLimit} oyuncu olabilir.`); return; }
+                if (rosterChecked.length < 5) { setForfeitWarning(`${controlledTeamName} 5 oyuncu bildirmedi. Hukmen yenilgi riski var.`); return; }
+                if (rosterChecked.length > matchRosterLimit) { setForfeitWarning(`Mac kadrosu en fazla ${matchRosterLimit} oyuncu olabilir.`); return; }
                 setForfeitWarning(""); setFlowStep("STARTERS");
               }}>Kadro Tamam &rarr;</button>
               {forfeitWarning && <div style={{ color: '#ef4444', marginTop: '1rem' }}>{forfeitWarning}</div>}
@@ -1396,7 +1400,7 @@ export default function OperatorPage() {
           {flowStep === "STARTERS" && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <h2 style={{ fontSize: '1.5rem', color: '#fff', borderBottom: '1px solid var(--nn-border)', paddingBottom: '0.5rem' }}>5. lk 5 Belirle</h2>
-              <p style={{ color: 'var(--nn-text-muted)' }}>Seilen ma kadrosundan sahaya kacak tam 5 oyuncu seilmeli. u an: <b style={{ color: starterChecked.length === 5 ? '#22c55e' : 'var(--nn-orange)' }}>{starterChecked.length}/5</b></p>
+              <p style={{ color: 'var(--nn-text-muted)' }}>Secilen mac kadrosundan sahaya cikacak tam 5 oyuncu secilmeli. u an: <b style={{ color: starterChecked.length === 5 ? '#22c55e' : 'var(--nn-orange)' }}>{starterChecked.length}/5</b></p>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.5rem', padding: '1rem', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', border: '1px solid var(--nn-border)' }}>
                 {rosterChecked.map((p) => (
                   <label key={p} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', color: starterChecked.includes(p) ? '#fff' : 'var(--nn-text-muted)', background: starterChecked.includes(p) ? 'rgba(255,87,34,0.1)' : 'transparent', padding: '0.5rem', borderRadius: '4px' }}>
@@ -1404,7 +1408,7 @@ export default function OperatorPage() {
                   </label>
                 ))}
               </div>
-              <button className="nn-button nn-button-success" style={{ alignSelf: 'flex-start', marginTop: '1rem' }} onClick={confirmStarters}>Ma Ekranna Ge &rarr;</button>
+              <button className="nn-button nn-button-success" style={{ alignSelf: 'flex-start', marginTop: '1rem' }} onClick={confirmStarters}>Mac Ekranina Gec &rarr;</button>
               {forfeitWarning && <div style={{ color: '#ef4444', marginTop: '1rem' }}>{forfeitWarning}</div>}
             </div>
           )}
@@ -1418,9 +1422,9 @@ export default function OperatorPage() {
       <header className="score-header">
         <div className="team-score">
           <div>
-            <span>EV SAHB</span>
-            <h1>{activeMatch?.home || "EV SAHB"}</h1>
-            <div className="team-fouls" title="Takm faulleri">
+            <span>EV SAHIBI</span>
+            <h1>{activeMatch?.home || "EV SAHIBI"}</h1>
+            <div className="team-fouls" title="Takim faulleri">
               <small>FAUL</small>
               <div className="foul-dots">{foulDots(homeTeamFouls)}</div>
             </div>
@@ -1431,14 +1435,14 @@ export default function OperatorPage() {
           <span>{periodLabel}</span>
           <strong>{fmt(seconds)}</strong>
           <div className="clock-buttons">
-            <button onClick={startClock}>▶ DEVAM ET</button>
+            <button onClick={startClock}>? DEVAM ET</button>
             <button
               onClick={() => {
                 stopClock();
                 persistMatchState("live");
               }}
             >
-              ⏸ DURDUR
+              ? DURDUR
             </button>
           </div>
           <small>
@@ -1446,8 +1450,8 @@ export default function OperatorPage() {
             {matchStatus === "live"
               ? "CANLI"
               : matchStatus === "finished_pending"
-                ? "1 DK DZELTME"
-                : "KLTL"}
+                ? "1 DK DUZELTME"
+                : "KILITLI"}
           </small>
           <small>
             {online ? "ONLINE" : "OFFLINE"} / Queue:{" "}
@@ -1457,9 +1461,9 @@ export default function OperatorPage() {
           </small>
           <small>{liveScoreInfo}</small>
           {activeMatch?.competitionType === "SPECIAL_MATCH" || activeMatch?.competitionType === "FRIENDLY" ? (
-            <small>ZEL/HAZIRLIK  Puan/sezon tablosuna ilemez</small>
+            <small>ZEL/HAZIRLIK  Puan/sezon tablosuna islemez</small>
           ) : activeMatch?.competitionType === "TOURNAMENT" ? (
-            <small>TURNUVA  Kariyerde ayr sekmede</small>
+            <small>TURNUVA  Kariyerde ayri sekmede</small>
           ) : null}
           <button onClick={toggleOnline}>
             {online ? "Offline Yap" : "Online Yap"}
@@ -1467,9 +1471,9 @@ export default function OperatorPage() {
         </div>
         <div className="team-score away">
           <div>
-            <span>MSAFR</span>
-            <h1>{activeMatch?.away || "MSAFR"}</h1>
-            <div className="team-fouls" title="Takm faulleri">
+            <span>MISAFIR</span>
+            <h1>{activeMatch?.away || "MISAFIR"}</h1>
+            <div className="team-fouls" title="Takim faulleri">
               <small>FAUL</small>
               <div className="foul-dots">{foulDots(awayTeamFouls)}</div>
             </div>
@@ -1480,10 +1484,10 @@ export default function OperatorPage() {
 
       <section className="stat-footer">
         <div className="stat-context">
-          <span>statistik Girii</span>
+          <span>statistik Girisi</span>
           <b>{selectedPlayer}</b>
           <small>
-            Tek tk: 1 sn bekler, isabetsiz at  ift tk: say  +1: faul
+            Tek tik: 1 sn bekler, isabetsiz atis  ift tik: sayi  +1: faul
             izgisi
           </small>
         </div>
@@ -1500,9 +1504,9 @@ export default function OperatorPage() {
           <button onClick={() => eventOnly("OREB")}>Rib. H</button>
           <button onClick={() => eventOnly("DREB")}>Rib. S</button>
           <button onClick={() => eventOnly("STL")}>Top alma</button>
-          <button onClick={() => eventOnly("TOV")}>Top Kayb</button>
+          <button onClick={() => eventOnly("TOV")}>Top Kaybi</button>
           <button onClick={() => startFoulPick("FOUL")}>Faul</button>
-          <button onClick={() => startFoulPick("FOUL_DRAWN")}>Faul Ald</button>
+          <button onClick={() => startFoulPick("FOUL_DRAWN")}>Faul Aldi</button>
           <button onClick={() => eventOnly("BLK")}>Blok</button>
           <button onClick={() => eventOnly("BLK_AGAINST")}>Blok Yedi</button>
           <button onClick={() => eventOnly("TIMEOUT")}>Mola</button>
@@ -1542,7 +1546,7 @@ export default function OperatorPage() {
               style={{ background: swapCourt ? 'var(--nn-cyan)' : 'transparent', color: swapCourt ? '#000' : 'var(--nn-cyan)', border: '1px solid var(--nn-cyan)', padding: '0.25rem 0.75rem', borderRadius: '4px', fontSize: '0.8rem', fontWeight: 'bold' }} 
               onClick={() => setSwapCourt(prev => !prev)}
             >
-              Saha Ynn evir ??
+              Saha Yonunu evir ??
             </button>
           </div>
 
@@ -1551,12 +1555,12 @@ export default function OperatorPage() {
               {pendingShot ? (
                 <>
                   <b>{pendingShot.player}</b>{" "}
-                  {pendingShot.made ? "say" : "isabetsiz at"} iin sahada
-                  yeri tkla.
+                  {pendingShot.made ? "sayi" : "isabetsiz atis"} icin sahada
+                  yeri tikla.
                 </>
               ) : (
                 <>
-                  <b>{selectedPlayer}</b> {pendingFoul} iin faul yerini tkla.
+                  <b>{selectedPlayer}</b> {pendingFoul} icin faul yerini tikla.
                 </>
               )}
               <button
@@ -1565,7 +1569,7 @@ export default function OperatorPage() {
                   setPendingFoul(null);
                 }}
               >
-                Vazge
+                Vazgec
               </button>
             </div>
           )}
@@ -1599,7 +1603,7 @@ export default function OperatorPage() {
           <div className="panel-title">
             <div>
               <h2>{controlledTeamName}</h2>
-              <span>{operatorSide === "HOME" ? "Ev sahibi operatr" : "Misafir operatr"} / sadece kendi takmn</span>
+              <span>{operatorSide === "HOME" ? "Ev sahibi operatoru" : "Misafir operatoru"} / sadece kendi takimin</span>
             </div>
           </div>
           <div className="roster-block">
@@ -1610,7 +1614,7 @@ export default function OperatorPage() {
                 className={`player-row ${selectedPlayer === p ? "selected" : ""} ${isFouledOut(p) ? "fouled-out" : ""}`}
                 onClick={() => {
                   if (isFouledOut(p)) {
-                    log(`SSTEM: ${p} 5 faul nedeniyle seilemez.`);
+                    log(`SISTEM: ${p} 5 faul nedeniyle secilemez.`);
                     return;
                   }
                   setSelectedPlayer(p);
@@ -1628,7 +1632,7 @@ export default function OperatorPage() {
                     backgroundColor: isFouledOut(p) ? '#ef4444' : (playerFouls[p] === 4 ? '#f97316' : (playerFouls[p] === 3 ? '#eab308' : '#374151')),
                     boxShadow: isFouledOut(p) ? '0 0 5px rgba(239, 68, 68, 0.5)' : 'none'
                   }}>
-                    F: {playerFouls[p] || 0}/5 {isFouledOut(p) && "DII"}
+                    F: {playerFouls[p] || 0}/5 {isFouledOut(p) && "DISI"}
                   </span>
                 </div>
                 <button
@@ -1637,7 +1641,7 @@ export default function OperatorPage() {
                     beginSubstitution(p);
                   }}
                 >
-                  Dei
+                  Degis
                 </button>
               </div>
             ))}
@@ -1652,7 +1656,7 @@ export default function OperatorPage() {
                   disabled={isFouledOut(p)}
                   onClick={() => {
                     if (isFouledOut(p)) {
-                      log(`SSTEM: ${p} 5 faul nedeniyle seilemez.`);
+                      log(`SISTEM: ${p} 5 faul nedeniyle secilemez.`);
                       return;
                     }
                     setSelectedPlayer(p);
@@ -1673,9 +1677,9 @@ export default function OperatorPage() {
             </div>
           </div>
           <div className="selected-player-card">
-            <span>Seili Oyuncu</span>
+            <span>Secili Oyuncu</span>
             <strong>{selectedPlayer}</strong>
-            <small>PF: {playerFouls[selectedPlayer] || 0}/5 {isFouledOut(selectedPlayer) ? " OYUN DII" : ""}</small>
+            <small>PF: {playerFouls[selectedPlayer] || 0}/5 {isFouledOut(selectedPlayer) ? " OYUN DISI" : ""}</small>
           </div>
         </aside>
       </main>
@@ -1693,11 +1697,11 @@ export default function OperatorPage() {
         <div className="modal-backdrop">
           <div className="modal">
             <h2>
-              {shotModal.player} {shotModal.points} Say
+              {shotModal.player} {shotModal.points} Sayi
             </h2>
             <p>
-              ift tk say olarak kaydedildi. Asist / faul se, sonra ut
-              yerini sahadan iaretle.
+              ift tik sayi olarak kaydedildi. Asist / faul sec, sonra ut
+              yerini sahadan isaretle.
             </p>
             <div className="decision-grid">
               <div className="decision-card">
@@ -1730,7 +1734,7 @@ export default function OperatorPage() {
             </div>
             <div className="modal-actions">
               <button className="primary" onClick={startShotPick}>
-                ut Yerini Se
+                ut Yerini Sec
               </button>
               <button onClick={saveShotWithoutLocation}>Konumsuz Kaydet</button>
               <button onClick={() => setShotModal(null)}>ptal</button>
@@ -1742,10 +1746,10 @@ export default function OperatorPage() {
       {subOut && (
         <div className="modal-backdrop">
           <div className="modal small">
-            <h2>Oyuncu Deiiklii</h2>
+            <h2>Oyuncu Degisikligi</h2>
             <p>
-              kan oyuncu: <b>{subOut}</b>
-              {mustSubPlayer === subOut ? <><br /><b style={{ color: "#facc15" }}>5 faul nedeniyle zorunlu deiiklik</b></> : null}
+              cikan oyuncu: <b>{subOut}</b>
+              {mustSubPlayer === subOut ? <><br /><b style={{ color: "#facc15" }}>5 faul nedeniyle zorunlu degisiklik</b></> : null}
             </p>
             <h3>Oyuna Girecek Oyuncu</h3>
             <div className="bench-grid">
