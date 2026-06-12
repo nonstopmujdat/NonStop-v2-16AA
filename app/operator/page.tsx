@@ -391,10 +391,12 @@ export default function OperatorPage() {
   function resetRosterForSide(side: OperatorSide) {
     const labels = getSidePlayerLabels(side);
     const initialRoster = labels.slice(0, Math.min(8, matchRosterLimit));
-    const initialStarters = labels.slice(0, 5);
+
+    // V2.1.26H-4C: İlk 5 artık otomatik seçilmez.
+    // Operatör STARTERS ekranında tam 5 oyuncuyu manuel seçer.
     setRosterChecked(initialRoster);
-    setStarterChecked(initialStarters);
-    setSelectedPlayer(initialStarters[0] || initialRoster[0] || "");
+    setStarterChecked([]);
+    setSelectedPlayer(initialRoster[0] || "");
     setForfeitWarning(labels.length ? "" : "Bu takım için oyuncu bulunamadı. Mini Admin / Veri Yönetimi ekranından oyuncu ekleyin.");
   }
 
@@ -1034,8 +1036,11 @@ export default function OperatorPage() {
     if (!activeMatch) return;
     const labels = getSidePlayerLabels(operatorSide);
     if (!labels.length) return;
+
+    // V2.1.26H-4C: Takım listesi/maç kadrosu hazır gelir,
+    // fakat ilk 5 otomatik seçilmez. İlk 5'i operatör elle belirler.
     setRosterChecked(labels.slice(0, Math.min(8, matchRosterLimit)));
-    setStarterChecked(labels.slice(0, 5));
+    setStarterChecked([]);
     setSelectedPlayer(labels[0] || "");
   }, [activeMatch?.id, operatorSide, homePlayers.length, awayPlayers.length]);
 
@@ -1092,8 +1097,8 @@ export default function OperatorPage() {
   }
 
   async function confirmStarters() {
-    if (starterChecked.length < 5) {
-      setForfeitWarning(`${controlledTeamName} ilk 5 çıkaramadı. Hükmen yenilgi riski var.`);
+    if (starterChecked.length !== 5) {
+      setForfeitWarning(`${controlledTeamName} için tam 5 oyuncu seçmelisin. İlk 5 otomatik seçilmez.`);
       return;
     }
     await saveRosterToDb(starterChecked.slice(0, 5));
