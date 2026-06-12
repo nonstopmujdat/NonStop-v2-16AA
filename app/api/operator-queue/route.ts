@@ -15,14 +15,7 @@ function numValue(value: any): number | null {
 
 function pickName(row: AnyRow | undefined | null, fallback: string) {
   if (!row) return fallback;
-  return (
-    row.name ||
-    row.team_name ||
-    row.club_name ||
-    row.title ||
-    row.label ||
-    fallback
-  );
+  return row.name || row.team_name || row.club_name || row.title || row.label || fallback;
 }
 
 function pickCityName(row: AnyRow | undefined | null, fallback: string) {
@@ -44,32 +37,34 @@ function mapById(rows: AnyRow[] | null | undefined) {
   return map;
 }
 
+function normalizeStatus(value: any) {
+  return textValue(value).trim().toUpperCase();
+}
+
+function normalizeDateOnly(value: any) {
+  if (!value) return "";
+  return String(value).slice(0, 10);
+}
+
 export async function GET() {
   try {
     if (!hasSupabaseAdminConfig()) {
-      return NextResponse.json(
-        { ok: false, error: "Supabase admin config eksik." },
-        { status: 500 }
-      );
+      return NextResponse.json({ ok: false, error: "Supabase admin config eksik." }, { status: 500 });
     }
 
     const supabase = getSupabaseAdmin();
 
-    const [citiesRes, venuesRes, teamsRes, matchesRes, competitionsRes, categoriesRes] =
-      await Promise.all([
-        supabase.from("cities").select("*").order("id", { ascending: true }),
-        supabase.from("venues").select("*").order("id", { ascending: true }),
-        supabase.from("teams").select("*").order("id", { ascending: true }),
-        supabase.from("matches").select("*").order("id", { ascending: true }),
-        supabase.from("competitions").select("*").order("id", { ascending: true }),
-        supabase.from("categories").select("*").order("id", { ascending: true }),
-      ]);
+    const [citiesRes, venuesRes, teamsRes, matchesRes, competitionsRes, categoriesRes] = await Promise.all([
+      supabase.from("cities").select("*").order("id", { ascending: true }),
+      supabase.from("venues").select("*").order("id", { ascending: true }),
+      supabase.from("teams").select("*").order("id", { ascending: true }),
+      supabase.from("matches").select("*").order("match_date", { ascending: false }).order("match_time", { ascending: true }).order("id", { ascending: false }),
+      supabase.from("competitions").select("*").order("id", { ascending: true }),
+      supabase.from("categories").select("*").order("id", { ascending: true }),
+    ]);
 
     if (matchesRes.error) {
-      return NextResponse.json(
-        { ok: false, error: matchesRes.error.message },
-        { status: 500 }
-      );
+      return NextResponse.json({ ok: false, error: matchesRes.error.message }, { status: 500 });
     }
 
     const cities = citiesRes.data || [];
@@ -85,9 +80,7 @@ export async function GET() {
     const competitionMap = mapById(competitions);
     const categoryMap = mapById(categories);
 
-    const cityNames = Array.from(
-      new Set(cities.map((c) => pickCityName(c, "Şehir")).filter(Boolean))
-    ).sort((a, b) => String(a).localeCompare(String(b), "tr"));
+    const cityNames = Array.from(new Set(cities.map((c) => pickCityName(c, "Şehir")).filter(Boolean))).sort((a, b) => String(a).localeCompare(String(b), "tr"));
 
     const venueOptions = venues.map((v) => {
       const venueId = numValue(v.id) || 0;
@@ -100,10 +93,24 @@ export async function GET() {
       };
     });
 
+    const today = new Date().toISOString().slice(0, 10);
+
     const visibleMatches = matches.filter((m) => {
-      const status = textValue(m.status).toUpperCase();
+      const status = normalizeStatus(m.status);
       const locked = Boolean(m.locked);
-      return !locked && ["PLANLANDI", "DEVAM_EDIYOR", "DEVAM", "LIVE"].includes(status);
+      const matchDate = normalizeDateOnly(m.match_date || m.match_datetime);
+
+      if (locked) return false;
+
+      // Kritik kural:
+      // DEVAM_EDIYOR olan maçlar tarihinden bağımsız olarak her zaman operator ekranına gelir.
+      // Böylece yarın Match ID 565 yarım kalırsa tekrar girilebilir.
+      if (status === "DEVAM_EDIYOR") return true;
+
+      // PLANLANDI maçlar ise bugünün maç listesinde görünür.
+      if (status === "PLANLANDI" && (!matchDate || matchDate === today)) return true;
+
+      return false;
     });
 
     const matchOptions = visibleMatches.map((m) => {
@@ -111,21 +118,21 @@ export async function GET() {
       const homeTeamId = numValue(m.home_team_id);
       const awayTeamId = numValue(m.away_team_id);
       const venueId = numValue(m.venue_id);
-      const cityId = numValue(m.city_id) || (venueId ? numValue(venueMap.get(venueId)?.city_id) : null);
+      const venue = venueId ? venueMap.get(venueId) : null;
+      const cityId = numValue(m.city_id) || (venueId ? numValue(venue?.city_id) : null);
+      const city = cityId ? cityMap.get(cityId) : null;
       const competitionId = numValue(m.competition_id);
       const categoryId = numValue(m.category_id);
-
       const homeTeam = homeTeamId ? teamMap.get(homeTeamId) : null;
       const awayTeam = awayTeamId ? teamMap.get(awayTeamId) : null;
-      const venue = venueId ? venueMap.get(venueId) : null;
-      const city = cityId ? cityMap.get(cityId) : null;
       const competition = competitionId ? competitionMap.get(competitionId) : null;
       const category = categoryId ? categoryMap.get(categoryId) : null;
+      const status = normalizeStatus(m.status);
 
       const matchTime =
         m.match_time ||
         m.time ||
-        (m.match_date ? String(m.match_date).slice(11, 16) : "") ||
+        (m.match_datetime ? String(m.match_datetime).slice(11, 16) : "") ||
         "Bugün";
 
       return {
@@ -135,25 +142,20 @@ export async function GET() {
         venue: pickVenueName(venue, textValue(m.venue, "Demo Salon")),
         home: pickName(homeTeam, `Ev Sahibi ${homeTeamId || ""}`.trim()),
         away: pickName(awayTeam, `Misafir ${awayTeamId || ""}`.trim()),
-
-        // V2.1.26I kritik düzeltme:
-        // Operator sayfası gerçek oyuncuları yüklemek için bu iki alanı bekliyor.
         homeTeamId,
         awayTeamId,
-
-        status: m.status || "PLANLANDI",
+        status,
         locked: Boolean(m.locked),
+        isResumeMatch: status === "DEVAM_EDIYOR",
         category: pickName(category, textValue(m.category, "SERBEST")),
         competition: pickName(competition, textValue(m.competition, "Lig / Test Maçı")),
-        competitionType:
-          m.competition_type ||
-          m.match_type ||
-          m.match_kind ||
-          "LEAGUE",
+        competitionType: m.competition_type || m.match_type || m.match_kind || "LEAGUE",
         matchKind: m.match_kind || m.match_type || null,
         rosterLimit: Number(m.roster_limit || 12),
       };
     });
+
+    const resumeMatches = matchOptions.filter((m) => m.isResumeMatch);
 
     return NextResponse.json({
       ok: true,
@@ -161,14 +163,12 @@ export async function GET() {
       cities: cityNames.length ? cityNames : ["Bursa"],
       venues: venueOptions,
       matches: matchOptions,
+      resumeMatches,
       adminCities: cityNames.length ? cityNames : ["Bursa"],
       adminVenues: venueOptions,
       adminMatches: matchOptions,
     });
   } catch (err: any) {
-    return NextResponse.json(
-      { ok: false, error: String(err?.message || err) },
-      { status: 500 }
-    );
+    return NextResponse.json({ ok: false, error: String(err?.message || err) }, { status: 500 });
   }
 }
