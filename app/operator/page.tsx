@@ -227,6 +227,79 @@ export default function OperatorPage() {
     setFeed((prev) => [text, ...prev].slice(0, 30));
   }
 
+  async function postOperatorMinutes(
+    action: "OPEN_STARTERS" | "OPEN_PLAYER" | "CLOSE_PLAYER",
+    playerId?: number | null,
+    override?: Partial<{ quarter: number; clockSeconds: number; gameClock: string; teamId: number }>,
+  ) {
+    if (!activeMatch?.id) return false;
+
+    const clockSeconds = Number(override?.clockSeconds ?? seconds);
+    const body = {
+      action,
+      match_id: Number(activeMatch.id),
+      team_id: Number(override?.teamId ?? getControlledTeamId()),
+      player_id: playerId ?? undefined,
+      quarter: Number(override?.quarter ?? quarter),
+      clock_seconds: clockSeconds,
+      game_clock: override?.gameClock ?? fmt(clockSeconds),
+    };
+
+    try {
+      const res = await fetch("/api/operator-minutes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        cache: "no-store",
+        body: JSON.stringify(body),
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok || json?.ok === false) {
+        log(`SİSTEM: süre kaydı hatası ${action} ${String(json?.error || res.statusText).slice(0, 120)}`);
+        return false;
+      }
+      return true;
+    } catch (err: any) {
+      log(`SİSTEM: süre API hatası ${action} ${String(err?.message || err).slice(0, 120)}`);
+      return false;
+    }
+  }
+
+  async function openStarterMinuteSessions() {
+    const ok = await postOperatorMinutes("OPEN_STARTERS", null, {
+      quarter,
+      clockSeconds: seconds,
+      gameClock: fmt(seconds),
+    });
+    if (ok) log(`SİSTEM: ${controlledTeamName} ilk 5 süre kayıtları açıldı.`);
+  }
+
+  async function closePlayerMinuteSession(player: string, clockSeconds = seconds) {
+    const playerId = getPlayerId(player);
+    if (!playerId) return false;
+    return postOperatorMinutes("CLOSE_PLAYER", playerId, {
+      clockSeconds,
+      gameClock: fmt(clockSeconds),
+    });
+  }
+
+  async function openPlayerMinuteSession(player: string, nextQuarter = quarter, clockSeconds = seconds) {
+    const playerId = getPlayerId(player);
+    if (!playerId) return false;
+    return postOperatorMinutes("OPEN_PLAYER", playerId, {
+      quarter: nextQuarter,
+      clockSeconds,
+      gameClock: fmt(clockSeconds),
+    });
+  }
+
+  async function closeOnCourtMinuteSessions(clockSeconds = seconds) {
+    await Promise.all(onCourt.map((player) => closePlayerMinuteSession(player, clockSeconds)));
+  }
+
+  async function openOnCourtMinuteSessions(nextQuarter: number, clockSeconds: number) {
+    await Promise.all(onCourt.map((player) => openPlayerMinuteSession(player, nextQuarter, clockSeconds)));
+  }
+
   function startClock() {
     if (!canStartClock) {
       log("SİSTEM: süreyi sadece ev sahibi operatörü başlatabilir.");
@@ -264,6 +337,8 @@ export default function OperatorPage() {
 
     if (quarter < 4) {
       const nextQuarter = quarter + 1;
+      closeOnCourtMinuteSessions(0);
+      setTimeout(() => openOnCourtMinuteSessions(nextQuarter, 600), 0);
       setQuarter(nextQuarter);
       if (nextQuarter === 3) setSwapCourt(true);
       setSeconds(600);
@@ -277,6 +352,8 @@ export default function OperatorPage() {
 
     if (homeScore === awayScore) {
       const nextQuarter = quarter + 1;
+      closeOnCourtMinuteSessions(0);
+      setTimeout(() => openOnCourtMinuteSessions(nextQuarter, 300), 0);
       setQuarter(nextQuarter);
       setSeconds(300);
       resetPeriodTeamFouls();
@@ -287,6 +364,7 @@ export default function OperatorPage() {
       return;
     }
 
+    closeOnCourtMinuteSessions(0);
     setMatchStatus("finished_pending");
     log("SİSTEM: maç bitti. 1 dakika düzeltme süresi başladı.");
     persistMatchState("finished_pending", { seconds: 0 });
@@ -835,7 +913,7 @@ export default function OperatorPage() {
     persistMatchState("live");
   }
 
-  function saveSub(playerIn: string) {
+  async function saveSub(playerIn: string) {
     if (!subOut) return;
 
     const playerOut = subOut;
@@ -870,6 +948,8 @@ export default function OperatorPage() {
       player_in: playerIn,
       related_player_id: getPlayerId(playerIn),
     });
+    await closePlayerMinuteSession(playerOut);
+    await openPlayerMinuteSession(playerIn);
     saveSubstitutionToDb(playerOut, playerIn);
     log(`${fmt(seconds)} DEĞİŞİKLİK: ${playerOut} OUT / ${playerIn} IN`);
     setSubOut(null);
@@ -1017,6 +1097,7 @@ export default function OperatorPage() {
       return;
     }
     await saveRosterToDb(starterChecked.slice(0, 5));
+    await openStarterMinuteSessions();
     setOnCourt(starterChecked.slice(0, 5));
     setBench(rosterChecked.filter((p) => !starterChecked.includes(p)));
     setSelectedPlayer(starterChecked[0]);
