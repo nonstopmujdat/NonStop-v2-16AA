@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
 
 type QueueMatch = {
   id: number;
@@ -52,8 +51,13 @@ function isLiveStatus(status?: string) {
 }
 
 export default function LiveScoreboardCenter() {
-  const searchParams = useSearchParams();
-  const selectedMatchId = Number(searchParams.get("match_id") || 0);
+  const [selectedMatchId, setSelectedMatchId] = useState(0);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    setSelectedMatchId(Number(params.get("match_id") || 0));
+  }, []);
 
   const [matches, setMatches] = useState<QueueMatch[]>([]);
   const [score, setScore] = useState<LiveScore | null>(null);
