@@ -47,6 +47,8 @@ type DemoMatch = {
   countsForSeasonStats?: boolean;
   homeTeamId?: number | null;
   awayTeamId?: number | null;
+  status?: string | null;
+  locked?: boolean | null;
 };
 type PlayerOption = {
   id: number;
@@ -136,6 +138,10 @@ export default function OperatorPage() {
 
   const sourceMatches = adminMatches.length ? adminMatches : DEMO_TODAY_MATCHES;
   const todaysVenueMatches = sourceMatches.filter((m) => m.city === selectedCity && m.venue === selectedVenue);
+  const activeResumeMatches = sourceMatches.filter((m) => {
+    const status = String(m.status || "").toUpperCase();
+    return !m.locked && status === "DEVAM_EDIYOR";
+  });
   const controlledTeamName = activeMatch ? (operatorSide === "HOME" ? activeMatch.home : activeMatch.away) : "TAKIM";
   const opponentTeamName = activeMatch ? (operatorSide === "HOME" ? activeMatch.away : activeMatch.home) : "DİĞER TAKIM";
   const canStartClock = operatorSide === "HOME";
@@ -1100,6 +1106,8 @@ export default function OperatorPage() {
           competitionType: (m.competitionType || "LEAGUE") as DemoMatch["competitionType"],
           countsForStandings: m.countsForStandings ?? true,
           countsForSeasonStats: m.countsForSeasonStats ?? true,
+          status: String(m.status || "PLANLANDI"),
+          locked: Boolean(m.locked),
         })).filter((m: DemoMatch) => m.city && m.venue);
         setAdminCities(apiCities);
         setAdminVenues(apiVenues);
@@ -1269,6 +1277,23 @@ export default function OperatorPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <h2 style={{ fontSize: '1.5rem', color: '#fff', borderBottom: '1px solid var(--nn-border)', paddingBottom: '0.5rem' }}>3. Bugünkü Maç Sırası</h2>
               <p style={{ color: 'var(--nn-cyan)' }}>{queueInfo}</p>
+              {activeResumeMatches.length > 0 ? (
+                <div style={{ padding: '1rem', background: 'rgba(34,197,94,0.1)', border: '1px solid #22c55e', borderRadius: '8px', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  <b style={{ color: '#fff' }}>Devam Eden Maça Geri Dön</b>
+                  <span style={{ color: 'var(--nn-text-muted)', fontSize: '0.9rem' }}>Açık kalan veya devam eden maçlar burada görünür. Maç normal listede çıkmasa bile buradan geri dönebilirsin.</span>
+                  {activeResumeMatches.map((m) => (
+                    <button
+                      key={`resume-${m.id}`}
+                      className="nn-button nn-button-success"
+                      style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', padding: '1rem', height: 'auto' }}
+                      onClick={() => { setActiveMatch(m); setRosterChecked([]); setStarterChecked([]); setSelectedPlayer(""); setFlowStep("ROSTER"); }}
+                    >
+                      <b>{m.home} - {m.away}</b>
+                      <small>{m.venue} • {m.time} • {m.status || "DEVAM_EDIYOR"}</small>
+                    </button>
+                  ))}
+                </div>
+              ) : null}
               {todaysVenueMatches.length === 0 ? <div style={{ padding: '1rem', background: 'rgba(239,68,68,0.1)', color: '#fca5a5', border: '1px solid #ef4444', borderRadius: '8px' }}>Bu salon için bugün maç bulunamadı. Mini Admin’den maç oluşturduktan sonra tekrar deneyin.</div> : null}
               
               <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1rem', marginTop: '1rem' }}>
