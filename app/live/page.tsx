@@ -55,8 +55,13 @@ export default function LiveScoreboardCenter() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const params = new URLSearchParams(window.location.search);
-    setSelectedMatchId(Number(params.get("match_id") || 0));
+    function syncFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      setSelectedMatchId(Number(params.get("match_id") || 0));
+    }
+    syncFromUrl();
+    window.addEventListener("popstate", syncFromUrl);
+    return () => window.removeEventListener("popstate", syncFromUrl);
   }, []);
 
   const [matches, setMatches] = useState<QueueMatch[]>([]);
@@ -69,6 +74,27 @@ export default function LiveScoreboardCenter() {
     () => matches.find((m) => Number(m.id) === selectedMatchId) || null,
     [matches, selectedMatchId],
   );
+
+  function openScoreboard(matchId: number) {
+    const nextId = Number(matchId || 0);
+    if (!nextId) return;
+    setSelectedMatchId(nextId);
+    setScore(null);
+    setLoading(true);
+    if (typeof window !== "undefined") {
+      const url = `/live?match_id=${nextId}`;
+      window.history.pushState({}, "", url);
+    }
+    loadScore(nextId);
+  }
+
+  function backToLiveList() {
+    setSelectedMatchId(0);
+    setScore(null);
+    if (typeof window !== "undefined") {
+      window.history.pushState({}, "", "/live");
+    }
+  }
 
   async function loadMatches() {
     try {
@@ -155,30 +181,34 @@ export default function LiveScoreboardCenter() {
 
           <div style={{ display: "grid", gap: 12, marginTop: 18 }}>
             {matches.map((m) => (
-              <Link
+              <button
                 key={m.id}
-                href={`/live?match_id=${m.id}`}
+                type="button"
+                onClick={() => openScoreboard(Number(m.id))}
                 className="card"
                 style={{
                   display: "grid",
                   gap: 6,
-                  textDecoration: "none",
+                  textAlign: "left",
+                  cursor: "pointer",
+                  color: "inherit",
                   border: "1px solid #22c55e",
                   borderRadius: 14,
                   padding: 16,
+                  width: "100%",
                 }}
               >
                 <b style={{ fontSize: 20 }}>{m.home || "Ev Sahibi"} - {m.away || "Misafir"}</b>
                 <span>{m.venue || "Salon"} • {m.time || "Saat"}</span>
                 <small>{m.competition || "Maç"} • Match ID: {m.id}</small>
                 <strong style={{ color: "#22c55e" }}>Skorboardu Aç →</strong>
-              </Link>
+              </button>
             ))}
           </div>
         </section>
       ) : (
         <section style={{ marginTop: 18 }}>
-          <Link href="/live" style={{ display: "inline-block", marginBottom: 14 }}>← Canlı maçlara dön</Link>
+          <button type="button" onClick={backToLiveList} style={{ display: "inline-block", marginBottom: 14, background: "transparent", border: 0, color: "inherit", cursor: "pointer", padding: 0 }}>← Canlı maçlara dön</button>
 
           <div className="card" style={{ textAlign: "center", padding: 24 }}>
             <div style={{ color: "var(--muted, #94a3b8)", marginBottom: 10 }}>

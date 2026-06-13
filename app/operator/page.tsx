@@ -821,10 +821,9 @@ export default function OperatorPage() {
       tags: [],
     };
 
-    if (made) {
-      if (operatorSide === "HOME") setHomeScore((s) => s + points);
-      else setAwayScore((s) => s + points);
-    }
+    // V2.1.26J-10: Skor ekranda iki kat görünmesin diye
+    // local/iyimser skor artırma kaldırıldı. Skor artık yalnızca
+    // /api/live-score üzerinden, Supabase kayıtları kesinleşince güncellenir.
 
     if (points === 1) {
       stopClock();
