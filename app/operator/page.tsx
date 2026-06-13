@@ -821,7 +821,10 @@ export default function OperatorPage() {
       tags: [],
     };
 
-    if (made) setHomeScore((s) => s + points);
+    if (made) {
+      if (operatorSide === "HOME") setHomeScore((s) => s + points);
+      else setAwayScore((s) => s + points);
+    }
 
     if (points === 1) {
       stopClock();
@@ -1185,6 +1188,86 @@ export default function OperatorPage() {
   }
 
 
+
+
+  function normalizeUiMatchStatus(status: any): "live" | "finished_pending" | "finished" {
+    const raw = String(status || "").toUpperCase();
+    if (raw === "TAMAMLANDI" || raw === "FINISHED" || raw === "KILITLI") return "finished";
+    if (raw === "FINISHED_PENDING" || raw === "finished_pending") return "finished_pending";
+    return "live";
+  }
+
+  async function loadLiveScoreState(options: { syncClock?: boolean; silent?: boolean } = {}) {
+    if (!activeMatch?.id) return false;
+    try {
+      const res = await fetch(`/api/live-score?match_id=${Number(activeMatch.id)}`, { cache: "no-store" });
+      const json = await res.json().catch(() => null);
+      if (!res.ok || json?.ok === false) {
+        if (!options.silent) log(`SİSTEM: canlı skor alınamadı ${String(json?.error || res.statusText).slice(0, 120)}`);
+        return false;
+      }
+      setHomeScore(Number(json.home_score || 0));
+      setAwayScore(Number(json.away_score || 0));
+      setQuarter(Number(json.current_quarter || 1));
+      if (options.syncClock || !timer) setSeconds(Number(json.clock_seconds ?? 600));
+      setMatchStatus(normalizeUiMatchStatus(json.status));
+      return true;
+    } catch (err: any) {
+      if (!options.silent) log(`SİSTEM: canlı skor API hatası ${String(err?.message || err).slice(0, 120)}`);
+      return false;
+    }
+  }
+
+  async function resumeActiveMatch(match: DemoMatch, side: OperatorSide) {
+    const teamId = Number(side === "HOME" ? match.homeTeamId : match.awayTeamId) || 0;
+    if (!match?.id || !teamId) {
+      setForfeitWarning("Devam edilecek maçın takım bilgisi eksik.");
+      return;
+    }
+
+    stopClock();
+    setActiveMatch(match);
+    setOperatorSide(side);
+    setRosterChecked([]);
+    setStarterChecked([]);
+    setSelectedPlayer("");
+    setOnCourt([]);
+    setBench([]);
+    setForfeitWarning("");
+
+    try {
+      const params = new URLSearchParams({
+        match_id: String(match.id),
+        team_id: String(teamId),
+      });
+      const res = await fetch(`/api/match-resume-state?${params.toString()}`, { cache: "no-store" });
+      const json = await res.json().catch(() => null);
+      if (!res.ok || json?.ok === false) {
+        log(`SİSTEM: maç geri yüklenemedi ${String(json?.error || res.statusText).slice(0, 120)}`);
+        setFlowStep("ROSTER");
+        return;
+      }
+
+      const nextOnCourt = (json.onCourt || []) as string[];
+      const nextBench = (json.bench || []) as string[];
+      setHomeScore(Number(json.home_score || 0));
+      setAwayScore(Number(json.away_score || 0));
+      setQuarter(Number(json.current_quarter || 1));
+      setSeconds(Number(json.clock_seconds ?? 600));
+      setMatchStatus(normalizeUiMatchStatus(json.status));
+      setOnCourt(nextOnCourt);
+      setBench(nextBench);
+      setRosterChecked(Array.from(new Set([...nextOnCourt, ...nextBench])));
+      setStarterChecked(nextOnCourt.slice(0, 5));
+      setSelectedPlayer(nextOnCourt[0] || nextBench[0] || "");
+      setFlowStep("GAME");
+      log(`SİSTEM: ${side === "HOME" ? match.home : match.away} maça kaldığı yerden döndü.`);
+    } catch (err: any) {
+      log(`SİSTEM: geri dönüş API hatası ${String(err?.message || err).slice(0, 120)}`);
+      setFlowStep("ROSTER");
+    }
+  }
+
   function createSpecialMatch() {
     const home = specialHomeName.trim() || "EV SAHİBİ";
     const away = specialAwayName.trim() || "MİSAFİR / KARMA";
@@ -1226,6 +1309,17 @@ export default function OperatorPage() {
     setFlowStep("GAME");
     log(`SİSTEM: ${controlledTeamName} ilk 5 onaylandı. ${operatorSide === "HOME" ? "Süre başlatma yetkisi sende." : "Süreyi ev sahibi operatörü başlatacak."}`);
   }
+
+
+
+  useEffect(() => {
+    if (flowStep !== "GAME" || !activeMatch?.id) return;
+    loadLiveScoreState({ syncClock: operatorSide === "AWAY", silent: true });
+    const liveTimer = setInterval(() => {
+      loadLiveScoreState({ syncClock: operatorSide === "AWAY", silent: true });
+    }, 3000);
+    return () => clearInterval(liveTimer);
+  }, [flowStep, activeMatch?.id, operatorSide, timer]);
 
   if (flowStep !== "GAME") {
     const sidePlayers = getSidePlayerLabels(operatorSide);
@@ -1282,15 +1376,17 @@ export default function OperatorPage() {
                   <b style={{ color: '#fff' }}>Devam Eden Maça Geri Dön</b>
                   <span style={{ color: 'var(--nn-text-muted)', fontSize: '0.9rem' }}>Açık kalan veya devam eden maçlar burada görünür. Maç normal listede çıkmasa bile buradan geri dönebilirsin.</span>
                   {activeResumeMatches.map((m) => (
-                    <button
+                    <div
                       key={`resume-${m.id}`}
-                      className="nn-button nn-button-success"
-                      style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', padding: '1rem', height: 'auto' }}
-                      onClick={() => { setActiveMatch(m); setRosterChecked([]); setStarterChecked([]); setSelectedPlayer(""); setFlowStep("ROSTER"); }}
+                      style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', padding: '1rem', border: '1px solid rgba(34,197,94,0.45)', borderRadius: '8px', background: 'rgba(0,0,0,0.18)' }}
                     >
-                      <b>{m.home} - {m.away}</b>
-                      <small>{m.venue} • {m.time} • {m.status || "DEVAM_EDIYOR"}</small>
-                    </button>
+                      <b style={{ color: '#fff' }}>{m.home} - {m.away}</b>
+                      <small style={{ color: 'var(--nn-text-muted)' }}>{m.venue} • {m.time} • {m.status || "DEVAM_EDIYOR"}</small>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                        <button className="nn-button nn-button-success" onClick={() => resumeActiveMatch(m, "HOME")}>Ev Sahibi Olarak Devam Et</button>
+                        <button className="nn-button nn-button-success" onClick={() => resumeActiveMatch(m, "AWAY")}>Misafir Olarak Devam Et</button>
+                      </div>
+                    </div>
                   ))}
                 </div>
               ) : null}
