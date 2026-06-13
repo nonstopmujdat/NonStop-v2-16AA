@@ -1,196 +1,212 @@
-import Link from 'next/link';
-import { getSupabaseAdmin, hasSupabaseAdminConfig } from '@/lib/supabaseAdmin';
+"use client";
 
-export const dynamic = 'force-dynamic';
+import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
-type Team = { id: number; name: string };
-type MatchRow = {
+type QueueMatch = {
   id: number;
-  home_team_id: number | null;
-  away_team_id: number | null;
-  current_quarter: number | null;
-  clock_seconds: number | null;
-  home_score: number | null;
-  away_score: number | null;
+  time?: string;
+  city?: string;
+  venue?: string;
+  home?: string;
+  away?: string;
+  homeTeamId?: number | null;
+  awayTeamId?: number | null;
+  status?: string;
+  locked?: boolean;
+  competition?: string;
+  category?: string;
 };
-type EventRow = { event_type: string; team_id: number | null };
-type Player = { id: number; jersey_no: number | null; first_name: string; last_name: string };
-type PlayerStat = {
-  id: number;
+
+type LiveScore = {
+  ok: boolean;
   match_id: number;
-  player_id: number;
-  team_id: number | null;
-  points: number | null;
-  rebounds: number | null;
-  assists: number | null;
-  steals: number | null;
-  blocks: number | null;
-  turnovers: number | null;
-  fouls: number | null;
-};
-type TeamPeriodStat = {
-  id: number;
-  match_id: number;
-  quarter: number;
-  team_id: number;
-  points: number | null;
-  fouls: number | null;
-  rebounds: number | null;
-  assists: number | null;
-  steals: number | null;
-  turnovers: number | null;
-  blocks: number | null;
+  home_team_id: number;
+  away_team_id: number;
+  home_score: number;
+  away_score: number;
+  current_quarter: number;
+  clock_seconds: number;
+  status: string;
+  updated_at?: string | null;
+  source?: string;
+  error?: string;
 };
 
-function pointsForEvent(type: string) {
-  switch (String(type || '').toUpperCase()) {
-    case '2PA_MADE':
-    case '2PM':
-      return 2;
-    case '3PA_MADE':
-    case '3PM':
-      return 3;
-    case 'FTA_MADE':
-    case 'FTM':
-      return 1;
-    default:
-      return 0;
-  }
+function fmtClock(seconds: number) {
+  const safe = Math.max(0, Number(seconds || 0));
+  const m = Math.floor(safe / 60);
+  const s = safe % 60;
+  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
-function fmtClock(seconds: number | null | undefined) {
-  const s = Number(seconds ?? 0);
-  const safe = Number.isFinite(s) ? Math.max(0, s) : 0;
-  return `${String(Math.floor(safe / 60)).padStart(2, '0')}:${String(safe % 60).padStart(2, '0')}`;
+function periodLabel(q: number) {
+  const quarter = Number(q || 1);
+  if (quarter <= 4) return `${quarter}. PERİYOT`;
+  return `UZATMA ${quarter - 4}`;
 }
 
-export default async function LivePage() {
-  if (!hasSupabaseAdminConfig()) {
-    return (
-      <main className="dashboard">
-        <div className="topbar"><b>NONSTOP Canlı Skor</b><Link href="/operator">Operatör</Link></div>
-        <div className="card">Supabase ortam değişkenleri eksik. Render Environment içinde NEXT_PUBLIC_SUPABASE_URL ve SUPABASE_SERVICE_ROLE_KEY olmalı.</div>
-      </main>
-    );
+function isLiveStatus(status?: string) {
+  return String(status || "").toUpperCase() === "DEVAM_EDIYOR";
+}
+
+export default function LiveScoreboardCenter() {
+  const searchParams = useSearchParams();
+  const selectedMatchId = Number(searchParams.get("match_id") || 0);
+
+  const [matches, setMatches] = useState<QueueMatch[]>([]);
+  const [score, setScore] = useState<LiveScore | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
+
+  const selectedMatch = useMemo(
+    () => matches.find((m) => Number(m.id) === selectedMatchId) || null,
+    [matches, selectedMatchId],
+  );
+
+  async function loadMatches() {
+    try {
+      const res = await fetch("/api/operator-queue", { cache: "no-store" });
+      const json = await res.json().catch(() => null);
+      if (!res.ok || !json?.ok) {
+        throw new Error(json?.error || res.statusText || "Canlı maç listesi alınamadı.");
+      }
+      const list = (json.matches || json.adminMatches || []) as QueueMatch[];
+      setMatches(list.filter((m) => isLiveStatus(m.status) && !m.locked));
+      setLastRefresh(new Date());
+    } catch (err: any) {
+      setError(String(err?.message || err).slice(0, 180));
+    }
   }
 
-  const supabase = getSupabaseAdmin();
-  const matchId = 1;
+  async function loadScore(matchId: number) {
+    if (!matchId) return;
+    try {
+      const res = await fetch(`/api/live-score?match_id=${matchId}`, { cache: "no-store" });
+      const json = await res.json().catch(() => null);
+      if (!res.ok || !json?.ok) {
+        throw new Error(json?.error || res.statusText || "Canlı skor alınamadı.");
+      }
+      setScore(json as LiveScore);
+      setLastRefresh(new Date());
+      setError("");
+    } catch (err: any) {
+      setError(String(err?.message || err).slice(0, 180));
+    } finally {
+      setLoading(false);
+    }
+  }
 
-  const { data: match } = await supabase
-    .from('matches')
-    .select('id,home_team_id,away_team_id,current_quarter,clock_seconds,home_score,away_score')
-    .eq('id', matchId)
-    .maybeSingle<MatchRow>();
+  useEffect(() => {
+    setLoading(true);
+    loadMatches().finally(() => setLoading(false));
+    const t = setInterval(loadMatches, 5000);
+    return () => clearInterval(t);
+  }, []);
 
-  const { data: teams = [] } = await supabase
-    .from('teams')
-    .select('id,name')
-    .in('id', [match?.home_team_id || 1, match?.away_team_id || 2]);
-
-  const teamMap = new Map<number, Team>((teams as Team[]).map(t => [t.id, t]));
-  const homeTeamId = Number(match?.home_team_id || 1);
-  const awayTeamId = Number(match?.away_team_id || 2);
-  const homeTeam = teamMap.get(homeTeamId)?.name || 'FİNAL SPOR U14';
-  const awayTeam = teamMap.get(awayTeamId)?.name || 'TOFAŞ U14';
-
-  const { data: events = [] } = await supabase
-    .from('match_events')
-    .select('event_type,team_id')
-    .eq('match_id', matchId);
-
-  const score = (events as EventRow[]).reduce((acc, e) => {
-    const pts = pointsForEvent(e.event_type);
-    if (Number(e.team_id) === homeTeamId) acc.home += pts;
-    if (Number(e.team_id) === awayTeamId) acc.away += pts;
-    return acc;
-  }, { home: 0, away: 0 });
-
-  const { data: stats = [] } = await supabase
-    .from('player_game_stats')
-    .select('id,match_id,player_id,team_id,points,rebounds,assists,steals,blocks,turnovers,fouls')
-    .eq('match_id', matchId)
-    .order('points', { ascending: false });
-
-  const playerIds = Array.from(new Set((stats as PlayerStat[]).map(s => s.player_id).filter(Boolean)));
-  const { data: players = [] } = playerIds.length
-    ? await supabase.from('players').select('id,jersey_no,first_name,last_name').in('id', playerIds)
-    : { data: [] as Player[] };
-  const playerMap = new Map<number, Player>((players as Player[]).map(p => [p.id, p]));
-
-  const { data: periodStats = [] } = await supabase
-    .from('team_period_stats')
-    .select('id,match_id,quarter,team_id,points,fouls,rebounds,assists,steals,turnovers,blocks')
-    .eq('match_id', matchId)
-    .order('quarter', { ascending: true });
-
-  const periodMap = new Map<string, TeamPeriodStat>();
-  (periodStats as TeamPeriodStat[]).forEach(row => periodMap.set(`${row.quarter}-${row.team_id}`, row));
-  const maxQuarter = Math.max(4, ...(periodStats as TeamPeriodStat[]).map(row => Number(row.quarter || 1)));
-  const quarterNumbers = Array.from({ length: maxQuarter }, (_, i) => i + 1);
+  useEffect(() => {
+    if (!selectedMatchId) {
+      setScore(null);
+      return;
+    }
+    loadScore(selectedMatchId);
+    const t = setInterval(() => loadScore(selectedMatchId), 2000);
+    return () => clearInterval(t);
+  }, [selectedMatchId]);
 
   return (
-    <main className="dashboard live-dashboard">
-      <div className="topbar">
-        <b>NONSTOP Canlı Skor ve Oyuncu İstatistikleri</b>
-        <div style={{ display: 'flex', gap: 12 }}><Link href="/operator">Operatör</Link><Link href="/dashboard">Dashboard</Link></div>
+    <main className="dashboard" style={{ minHeight: "100vh", padding: 24 }}>
+      <div className="topbar" style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+        <b>NONSTOP Canlı Skor Merkezi</b>
+        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+          <Link href="/dashboard">Dashboard</Link>
+          <Link href="/operator">Operatör</Link>
+          <Link href="/live">Canlı Maçlar</Link>
+        </div>
       </div>
 
-      <section className="live-score-card">
-        <div className="live-team"><span>EV SAHİBİ</span><h1>{homeTeam}</h1><b>{score.home}</b></div>
-        <div className="live-clock"><span>{Number(match?.current_quarter || 1)}. ÇEYREK</span><strong>{fmtClock(match?.clock_seconds ?? 600)}</strong><small>match_id: {matchId}</small></div>
-        <div className="live-team away"><span>MİSAFİR</span><h1>{awayTeam}</h1><b>{score.away}</b></div>
-      </section>
+      {error ? (
+        <section className="card" style={{ marginTop: 16, border: "1px solid #ef4444", color: "#fecaca" }}>
+          <b>Uyarı</b>
+          <p>{error}</p>
+        </section>
+      ) : null}
 
+      {!selectedMatchId ? (
+        <section className="card" style={{ marginTop: 18 }}>
+          <h1>Canlı Maçlar</h1>
+          <p style={{ marginTop: 8, color: "var(--muted, #94a3b8)" }}>
+            DEVAM_EDIYOR durumundaki kilitsiz maçlar burada listelenir. Maça tıklayınca yayın skorboardu açılır.
+          </p>
 
-      <section className="card">
-        <h2>Periyot Skoru</h2>
-        <div className="stats-table-wrap">
-          <table className="stats-table period-table">
-            <thead>
-              <tr>
-                <th>Takım</th>
-                {quarterNumbers.map(q => <th key={q}>{q <= 4 ? `${q}P` : `OT${q - 4}`}</th>)}
-                <th>Toplam</th>
-              </tr>
-            </thead>
-            <tbody>
-              {[{ id: homeTeamId, name: homeTeam }, { id: awayTeamId, name: awayTeam }].map(team => {
-                const total = quarterNumbers.reduce((sum, q) => sum + Number(periodMap.get(`${q}-${team.id}`)?.points || 0), 0);
-                return (
-                  <tr key={team.id}>
-                    <td>{team.name}</td>
-                    {quarterNumbers.map(q => <td key={q}>{periodMap.get(`${q}-${team.id}`)?.points ?? 0}</td>)}
-                    <td><b style={{ fontSize: 18 }}>{total}</b></td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </section>
+          {loading ? <p style={{ marginTop: 16 }}>Canlı maçlar yükleniyor...</p> : null}
 
-      <section className="card">
-        <h2>Oyuncu İstatistik Paneli</h2>
-        <div className="stats-table-wrap">
-          <table className="stats-table">
-            <thead>
-              <tr><th>Oyuncu</th><th>Team ID</th><th>PTS</th><th>REB</th><th>AST</th><th>STL</th><th>BLK</th><th>TOV</th><th>PF</th></tr>
-            </thead>
-            <tbody>
-              {(stats as PlayerStat[]).map(row => {
-                const p = playerMap.get(row.player_id);
-                const name = p ? `#${p.jersey_no ?? '-'} ${p.first_name} ${p.last_name}` : `Player ${row.player_id}`;
-                return (
-                  <tr key={row.id}>
-                    <td>{name}</td><td>{row.team_id ?? '-'}</td><td>{row.points ?? 0}</td><td>{row.rebounds ?? 0}</td><td>{row.assists ?? 0}</td><td>{row.steals ?? 0}</td><td>{row.blocks ?? 0}</td><td>{row.turnovers ?? 0}</td><td>{row.fouls ?? 0}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </section>
+          {!loading && matches.length === 0 ? (
+            <div style={{ marginTop: 16, padding: 16, border: "1px solid #334155", borderRadius: 12 }}>
+              Şu anda devam eden maç bulunmuyor.
+            </div>
+          ) : null}
+
+          <div style={{ display: "grid", gap: 12, marginTop: 18 }}>
+            {matches.map((m) => (
+              <Link
+                key={m.id}
+                href={`/live?match_id=${m.id}`}
+                className="card"
+                style={{
+                  display: "grid",
+                  gap: 6,
+                  textDecoration: "none",
+                  border: "1px solid #22c55e",
+                  borderRadius: 14,
+                  padding: 16,
+                }}
+              >
+                <b style={{ fontSize: 20 }}>{m.home || "Ev Sahibi"} - {m.away || "Misafir"}</b>
+                <span>{m.venue || "Salon"} • {m.time || "Saat"}</span>
+                <small>{m.competition || "Maç"} • Match ID: {m.id}</small>
+                <strong style={{ color: "#22c55e" }}>Skorboardu Aç →</strong>
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : (
+        <section style={{ marginTop: 18 }}>
+          <Link href="/live" style={{ display: "inline-block", marginBottom: 14 }}>← Canlı maçlara dön</Link>
+
+          <div className="card" style={{ textAlign: "center", padding: 24 }}>
+            <div style={{ color: "var(--muted, #94a3b8)", marginBottom: 10 }}>
+              Match ID: {selectedMatchId} {selectedMatch?.venue ? `• ${selectedMatch.venue}` : ""}
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: 18, alignItems: "center" }}>
+              <div>
+                <div style={{ fontSize: 18, color: "var(--muted, #94a3b8)" }}>EV SAHİBİ</div>
+                <h1 style={{ fontSize: 32, margin: "8px 0" }}>{selectedMatch?.home || "Ev Sahibi"}</h1>
+                <div style={{ fontSize: 76, fontWeight: 900 }}>{score?.home_score ?? 0}</div>
+              </div>
+
+              <div style={{ minWidth: 160 }}>
+                <div style={{ fontSize: 22, fontWeight: 800 }}>{periodLabel(score?.current_quarter || 1)}</div>
+                <div style={{ fontSize: 48, fontWeight: 900, margin: "12px 0" }}>{fmtClock(score?.clock_seconds ?? 600)}</div>
+                <div style={{ color: "#22c55e", fontWeight: 800 }}>{score?.status || "DEVAM_EDIYOR"}</div>
+              </div>
+
+              <div>
+                <div style={{ fontSize: 18, color: "var(--muted, #94a3b8)" }}>MİSAFİR</div>
+                <h1 style={{ fontSize: 32, margin: "8px 0" }}>{selectedMatch?.away || "Misafir"}</h1>
+                <div style={{ fontSize: 76, fontWeight: 900 }}>{score?.away_score ?? 0}</div>
+              </div>
+            </div>
+
+            <div style={{ marginTop: 20, color: "var(--muted, #94a3b8)" }}>
+              Son güncelleme: {lastRefresh ? lastRefresh.toLocaleTimeString("tr-TR") : "-"}
+            </div>
+          </div>
+        </section>
+      )}
     </main>
   );
 }
